@@ -54,22 +54,22 @@ const assertSessionId = (id: string): void => {
 
 export default class StorageService {
   private readonly settingsPath: string
-  private readonly historiesPath: string
+  private readonly sessionsPath: string
   private readonly fileOperationTails = new Map<string, Promise<void>>()
 
   /** Creates a storage service rooted in the private application data directory. */
   public constructor(private readonly rootPath: string) {
     this.settingsPath = join(rootPath, 'settings.json')
-    this.historiesPath = join(rootPath, 'histories')
+    this.sessionsPath = join(rootPath, 'sessions')
   }
 
   /** Creates required directories and removes obsolete temporary files. */
   public async initialize(): Promise<void> {
     await mkdir(this.rootPath, { recursive: true })
-    await mkdir(this.historiesPath, { recursive: true })
+    await mkdir(this.sessionsPath, { recursive: true })
     await Promise.all([
       this.removeObsoleteTemporaryFiles(this.rootPath),
-      this.removeObsoleteTemporaryFiles(this.historiesPath),
+      this.removeObsoleteTemporaryFiles(this.sessionsPath),
     ])
   }
 
@@ -97,13 +97,13 @@ export default class StorageService {
 
   /** Lists all saved sessions sorted by last update. */
   public async listSessions(): Promise<SessionSummary[]> {
-    const entries = await readdir(this.historiesPath, { withFileTypes: true })
+    const entries = await readdir(this.sessionsPath, { withFileTypes: true })
     const files = entries
       .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
       .sort((left, right) => right.name.localeCompare(left.name))
     const summaries = await Promise.all(
       files.map(async (file) => {
-        const doc = await this.tryReadSession(join(this.historiesPath, file.name))
+        const doc = await this.tryReadSession(join(this.sessionsPath, file.name))
         if (!doc) return null
         const preview = (doc.item?.input ?? '').slice(0, 120)
         const summary: SessionSummary = {
@@ -188,14 +188,14 @@ export default class StorageService {
 
   /** Deletes all session documents and creates a fresh empty session. */
   public async deleteAllSessions(): Promise<SessionSummary[]> {
-    const entries = await readdir(this.historiesPath, { withFileTypes: true })
+    const entries = await readdir(this.sessionsPath, { withFileTypes: true })
     await Promise.allSettled(
       entries
         .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
         .map((entry) =>
-          this.withFileLock(join(this.historiesPath, entry.name), async () => {
+          this.withFileLock(join(this.sessionsPath, entry.name), async () => {
             try {
-              await unlink(join(this.historiesPath, entry.name))
+              await unlink(join(this.sessionsPath, entry.name))
             } catch (error) {
               if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
             }
@@ -264,7 +264,7 @@ export default class StorageService {
 
   /** Resolves a validated session identifier to its JSON file. */
   private sessionPath(id: string): string {
-    return join(this.historiesPath, `${id}.json`)
+    return join(this.sessionsPath, `${id}.json`)
   }
 
   /** Serializes and writes one JSON value directly to its destination file. */
