@@ -1,347 +1,270 @@
 /**
- * Stores validated settings and transcripts through serialized direct JSON file access.
+ * Stores validated settings and AI scan sessions through serialized direct JSON file access.
  */
 
 import { randomUUID } from 'node:crypto'
 import { mkdir, readFile, readdir, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import {
-  AUDIO_SOURCES,
+  AI_PROVIDERS,
+  SCAN_MODES,
+  THINKING_LEVELS,
+  VERBOSITY_LEVELS,
   type AppSettings,
   type AppSettingsPatch,
-  type DeleteTranscriptResult,
-  type TranscriptDocument,
-  type TranscriptSegment,
-  type TranscriptSummary,
-  type TranslationSegment,
+  type SessionDocument,
+  type SessionItem,
+  type SessionSummary,
 } from '@shared/types'
-import { TRANSLATION_PROVIDERS, TRANSLATION_TARGET_LANGUAGES } from '@shared/translation'
 import { z } from 'zod'
 import { parsePersistedSettings, settingsSchema } from '../settingsSchema'
 
-const segmentSchema = z.object({
+const sessionItemSchema = z.object({
   id: z.uuid(),
-  source: z.enum(AUDIO_SOURCES),
-  text: z.string(),
-  confidence: z.number().min(0).max(1),
+  scanMode: z.enum(SCAN_MODES),
+  provider: z.enum(AI_PROVIDERS),
+  model: z.string().min(1).max(100),
+  thinkingLevel: z.enum(THINKING_LEVELS),
+  verbosity: z.enum(VERBOSITY_LEVELS),
+  systemPromptPreset: z.string().max(100),
+  systemPromptText: z.string().max(10_000),
+  input: z.string().max(200_000),
+  output: z.string().max(200_000),
+  imagePath: z.string().max(500).optional(),
+  /** Captured region as a PNG data URL — persisted so the renderer can show it after the scan ends. */
+  imageDataUrl: z.string().max(50_000_000).optional(),
   createdAt: z.iso.datetime(),
-  offsetMs: z.number().nonnegative(),
 })
 
-const translationSchema = z
-  .object({
-    id: z.uuid(),
-    provider: z.enum(TRANSLATION_PROVIDERS),
-    sourceText: z.string().trim().min(1).max(20_000),
-    text: z.string().trim().min(1).max(20_000),
-    sourceLanguage: z.string().trim().min(1).max(24),
-    targetLanguage: z.enum(TRANSLATION_TARGET_LANGUAGES),
-    sourceSegmentIds: z.array(z.uuid()).min(1).max(200),
-    sourceStartIndex: z.number().int().nonnegative(),
-    sourceEndIndex: z.number().int().positive(),
-    createdAt: z.iso.datetime(),
-  })
-  .refine((translation) => translation.sourceEndIndex > translation.sourceStartIndex, {
-    path: ['sourceEndIndex'],
-    message: 'Translation source range must have a positive length.',
-  })
-
-const transcriptSchema = z.object({
+const sessionDocumentSchema = z.object({
   id: z.uuid(),
   title: z.string().min(1).max(200),
   isDefaultTitle: z.boolean(),
-  language: z.string().min(1).max(24),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
-  durationMs: z.number().nonnegative(),
-  segments: z.array(segmentSchema),
-  translations: z.array(translationSchema),
+  item: sessionItemSchema.nullable().optional(),
 })
 
-const DEFAULT_TRANSCRIPT_TITLE = 'New Transcript'
-const LEGACY_DEFAULT_TITLE_PATTERN = /^\d{4}-\d{2}-\d{2}\s*(?:\u00b7|\.|T)\s*\d{2}:\d{2}$/
+const DEFAULT_SESSION_TITLE = 'New Session'
 
-/** Rewrites source names from the first Electron schema before domain validation. */
-const migrateTranscript = (input: unknown): unknown => {
-  if (!input || typeof input !== 'object') return input
-  const transcript = input as Record<string, unknown>
-  if (!Array.isArray(transcript.segments)) return input
-  const segments = transcript.segments as unknown[]
-  const hasLegacyDefaultTitle =
-    typeof transcript.title === 'string' &&
-    (transcript.title === DEFAULT_TRANSCRIPT_TITLE ||
-      LEGACY_DEFAULT_TITLE_PATTERN.test(transcript.title))
-  const isDefaultTitle =
-    typeof transcript.isDefaultTitle === 'boolean'
-      ? transcript.isDefaultTitle
-      : hasLegacyDefaultTitle
-  return {
-    ...transcript,
-    title:
-      isDefaultTitle &&
-      typeof transcript.title === 'string' &&
-      LEGACY_DEFAULT_TITLE_PATTERN.test(transcript.title)
-        ? DEFAULT_TRANSCRIPT_TITLE
-        : transcript.title,
-    isDefaultTitle,
-    translations: Array.isArray(transcript.translations)
-      ? transcript.translations.map((translation): unknown => {
-          if (!translation || typeof translation !== 'object') return translation
-          const value = translation as Record<string, unknown>
-          return { provider: 'google', ...value }
-        })
-      : [],
-    segments: segments.map((segment): unknown => {
-      if (!segment || typeof segment !== 'object') return segment
-      const value = segment as Record<string, unknown>
-      return value.source === 'system' ? { ...value, source: 'speaker' } : value
-    }),
-  }
-}
-
-/** Rejects identifiers that could escape the transcript directory. */
-const assertTranscriptId = (id: string): void => {
-  if (!z.uuid().safeParse(id).success) throw new Error('Invalid transcript identifier.')
+/** Rejects identifiers that could escape the session directory. */
+const assertSessionId = (id: string): void => {
+  if (!z.uuid().safeParse(id).success) throw new Error('Invalid session identifier.')
 }
 
 export default class StorageService {
   private readonly settingsPath: string
-  private readonly transcriptsPath: string
+  private readonly historiesPath: string
   private readonly fileOperationTails = new Map<string, Promise<void>>()
 
   /** Creates a storage service rooted in the private application data directory. */
   public constructor(private readonly rootPath: string) {
     this.settingsPath = join(rootPath, 'settings.json')
-    this.transcriptsPath = join(rootPath, 'transcripts')
+    this.historiesPath = join(rootPath, 'histories')
   }
 
-  /** Creates required directories and removes obsolete temporary files from previous versions. */
+  /** Creates required directories and removes obsolete temporary files. */
   public async initialize(): Promise<void> {
     await mkdir(this.rootPath, { recursive: true })
-    await mkdir(this.transcriptsPath, { recursive: true })
+    await mkdir(this.historiesPath, { recursive: true })
     await Promise.all([
       this.removeObsoleteTemporaryFiles(this.rootPath),
-      this.removeObsoleteTemporaryFiles(this.transcriptsPath),
+      this.removeObsoleteTemporaryFiles(this.historiesPath),
     ])
   }
 
   /** Loads validated settings or safe defaults for missing or malformed data. */
   public async loadSettings(): Promise<AppSettings> {
-    return this.withFileLock(this.settingsPath, () => this.readSettingsUnlocked())
+    return this.withFileLock(this.settingsPath, async () => {
+      try {
+        const content = await readFile(this.settingsPath, 'utf8')
+        return parsePersistedSettings(JSON.parse(content) as unknown)
+      } catch {
+        return parsePersistedSettings(null)
+      }
+    })
   }
 
-  /** Reads settings while its caller owns the settings-file operation lock. */
-  private async readSettingsUnlocked(): Promise<AppSettings> {
-    try {
-      const value: unknown = JSON.parse(await readFile(this.settingsPath, 'utf8'))
-      return parsePersistedSettings(value)
-    } catch {
-      return parsePersistedSettings(null)
-    }
-  }
-
-  /** Validates and writes application settings directly to their JSON file. */
-  public async saveSettings(settings: AppSettings): Promise<AppSettings> {
-    const validated = settingsSchema.parse(settings)
-    await this.writeJsonFile(this.settingsPath, validated)
-    return validated
-  }
-
-  /** Atomically merges changed fields into the latest validated settings document. */
+  /** Merges a validated settings patch with the latest on-disk settings atomically. */
   public async updateSettings(patch: AppSettingsPatch): Promise<AppSettings> {
     return this.withFileLock(this.settingsPath, async () => {
-      const current = await this.readSettingsUnlocked()
-      const deepgramPatch = patch.transcriptionProviderSettings?.deepgram
-      const validated = settingsSchema.parse({
-        ...current,
-        ...patch,
-        transcriptionProviderSettings: deepgramPatch
-          ? {
-              ...current.transcriptionProviderSettings,
-              deepgram: {
-                ...current.transcriptionProviderSettings.deepgram,
-                ...deepgramPatch,
-              },
-            }
-          : current.transcriptionProviderSettings,
-      })
-      await this.writeJsonFileUnlocked(this.settingsPath, validated)
-      return validated
+      const current = await this.loadSettingsUnlocked()
+      const merged = settingsSchema.parse({ ...current, ...patch })
+      await this.writeJsonFileUnlocked(this.settingsPath, merged)
+      return merged
     })
   }
 
-  /** Creates a new empty transcript. */
-  public async createTranscript(language: string, title?: string): Promise<TranscriptDocument> {
-    const now = new Date()
-    const normalizedTitle = title?.trim().slice(0, 200)
-    const transcript: TranscriptDocument = {
-      id: randomUUID(),
-      title: normalizedTitle || DEFAULT_TRANSCRIPT_TITLE,
-      isDefaultTitle: !normalizedTitle,
-      language,
-      createdAt: now.toISOString(),
-      updatedAt: now.toISOString(),
-      durationMs: 0,
-      segments: [],
-      translations: [],
-    }
-    await this.writeTranscript(transcript)
-    return transcript
-  }
-
-  /** Adds one final source-attributed segment to a transcript. */
-  public async appendSegment(id: string, segment: TranscriptSegment): Promise<void> {
-    await this.appendSegments(id, [segment])
-  }
-
-  /** Adds a batch of final segments within one serialized read-modify-write operation. */
-  public async appendSegments(id: string, segments: TranscriptSegment[]): Promise<void> {
-    if (segments.length === 0) return
-    const validatedSegments = segments.map((segment) => segmentSchema.parse(segment))
-    await this.updateTranscript(id, (transcript) => {
-      transcript.segments.push(...validatedSegments)
-      transcript.updatedAt = new Date().toISOString()
-    })
-  }
-
-  /** Adds one validated sentence translation without duplicating its source-language pair. */
-  public async appendTranslation(id: string, translation: TranslationSegment): Promise<void> {
-    const validatedTranslation = translationSchema.parse(translation)
-    await this.updateTranscript(id, (transcript) => {
-      const duplicate = transcript.translations.some(
-        (candidate) =>
-          candidate.sourceEndIndex === validatedTranslation.sourceEndIndex &&
-          candidate.provider === validatedTranslation.provider &&
-          candidate.sourceLanguage === validatedTranslation.sourceLanguage &&
-          candidate.targetLanguage === validatedTranslation.targetLanguage,
-      )
-      if (duplicate) return
-      transcript.translations.push(validatedTranslation)
-      transcript.updatedAt = new Date().toISOString()
-    })
-  }
-
-  /** Finalizes a transcript with its total recording duration. */
-  public async finishTranscript(id: string, durationMs: number): Promise<TranscriptDocument> {
-    return this.updateTranscript(id, (transcript) => {
-      transcript.durationMs = Math.max(0, Math.round(durationMs))
-      transcript.updatedAt = new Date().toISOString()
-    })
-  }
-
-  /** Loads and validates one complete transcript. */
-  public async getTranscript(id: string): Promise<TranscriptDocument> {
-    assertTranscriptId(id)
-    const filePath = this.transcriptPath(id)
-    return this.withFileLock(filePath, () => this.readTranscriptUnlocked(filePath))
-  }
-
-  /** Lists compact transcript summaries in reverse chronological order. */
-  public async listTranscripts(): Promise<TranscriptSummary[]> {
-    const entries = await readdir(this.transcriptsPath, { withFileTypes: true })
-    const documents = await Promise.all(
-      entries
-        .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
-        .map((entry) => this.tryReadTranscript(join(this.transcriptsPath, entry.name))),
+  /** Lists all saved sessions sorted by last update. */
+  public async listSessions(): Promise<SessionSummary[]> {
+    const entries = await readdir(this.historiesPath, { withFileTypes: true })
+    const files = entries
+      .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
+      .sort((left, right) => right.name.localeCompare(left.name))
+    const summaries = await Promise.all(
+      files.map(async (file) => {
+        const doc = await this.tryReadSession(join(this.historiesPath, file.name))
+        if (!doc) return null
+        const preview = (doc.item?.input ?? '').slice(0, 120)
+        const summary: SessionSummary = {
+          id: doc.id,
+          title: doc.title,
+          isDefaultTitle: doc.isDefaultTitle,
+          createdAt: doc.createdAt,
+          updatedAt: doc.updatedAt,
+          hasItem: !!doc.item,
+          preview: preview || doc.title,
+        }
+        return summary
+      }),
     )
-
-    return documents
-      .filter((document): document is TranscriptDocument => document !== null)
-      .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
-      .map((document) => ({
-        id: document.id,
-        title: document.title,
-        isDefaultTitle: document.isDefaultTitle,
-        language: document.language,
-        createdAt: document.createdAt,
-        updatedAt: document.updatedAt,
-        durationMs: document.durationMs,
-        segmentCount: document.segments.length,
-        preview: document.segments
-          .map((segment) => segment.text)
-          .join(' ')
-          .slice(0, 140),
-      }))
+    return summaries.filter((summary): summary is SessionSummary => summary !== null)
   }
 
-  /** Renames a transcript within the same serialized file operation used by live writes. */
-  public async renameTranscript(id: string, title: string): Promise<TranscriptDocument> {
-    const normalizedTitle = title.trim().slice(0, 200)
-    if (!normalizedTitle) throw new Error('Transcript title cannot be empty.')
-    return this.updateTranscript(id, (transcript) => {
-      transcript.title = normalizedTitle
-      transcript.isDefaultTitle = false
-      transcript.updatedAt = new Date().toISOString()
-    })
-  }
-
-  /** Deletes a transcript while preserving one non-deletable empty workspace. */
-  public async deleteTranscript(id: string): Promise<DeleteTranscriptResult> {
-    assertTranscriptId(id)
-    return this.withFileLock(this.transcriptsPath, () => this.deleteTranscriptUnlocked(id))
-  }
-
-  /** Performs one deletion while holding the workspace-wide history lock. */
-  private async deleteTranscriptUnlocked(id: string): Promise<DeleteTranscriptResult> {
-    const transcripts = await this.listTranscripts()
-    const target = transcripts.find((transcript) => transcript.id === id)
-    if (!target) return { deleted: false }
-    if (transcripts.length === 1 && target.segmentCount === 0) return { deleted: false }
-
-    const replacement =
-      transcripts.length === 1 ? await this.createTranscript(target.language) : undefined
-    const filePath = this.transcriptPath(id)
-    try {
-      await this.withFileLock(filePath, () => unlink(filePath))
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-        if (replacement) await unlink(this.transcriptPath(replacement.id)).catch(() => undefined)
-        throw error
-      }
+  /** Creates a new empty session document. */
+  public async createSession(): Promise<SessionDocument> {
+    const now = new Date().toISOString()
+    const document: SessionDocument = {
+      id: randomUUID(),
+      title: DEFAULT_SESSION_TITLE,
+      isDefaultTitle: true,
+      createdAt: now,
+      updatedAt: now,
+      item: null,
     }
-    return replacement ? { deleted: true, replacement } : { deleted: true }
+    await this.writeSession(document)
+    return document
   }
 
-  /** Reads one transcript while tolerating malformed history entries. */
-  private async tryReadTranscript(filePath: string): Promise<TranscriptDocument | null> {
-    try {
-      return await this.withFileLock(filePath, () => this.readTranscriptUnlocked(filePath))
-    } catch {
-      return null
-    }
+  /** Loads one complete session document. */
+  public async getSession(id: string): Promise<SessionDocument> {
+    assertSessionId(id)
+    return this.withFileLock(this.sessionPath(id), () =>
+      this.readSessionUnlocked(this.sessionPath(id)),
+    )
   }
 
-  /** Applies one transcript mutation without allowing another operation to interleave. */
-  private async updateTranscript(
-    id: string,
-    update: (transcript: TranscriptDocument) => void,
-  ): Promise<TranscriptDocument> {
-    assertTranscriptId(id)
-    const filePath = this.transcriptPath(id)
+  /** Sets the single AI scan result item for the target session and persists it. */
+  public async setSessionItem(id: string, item: SessionItem): Promise<SessionDocument> {
+    assertSessionId(id)
+    const filePath = this.sessionPath(id)
     return this.withFileLock(filePath, async () => {
-      const transcript = await this.readTranscriptUnlocked(filePath)
-      update(transcript)
-      const validated = transcriptSchema.parse(transcript)
+      const doc = await this.readSessionUnlocked(filePath)
+      doc.item = item
+      doc.updatedAt = new Date().toISOString()
+      const validated = sessionDocumentSchema.parse(doc)
       await this.writeJsonFileUnlocked(filePath, validated)
       return validated
     })
   }
 
-  /** Validates and writes a complete transcript document. */
-  private async writeTranscript(transcript: TranscriptDocument): Promise<void> {
-    const validated = transcriptSchema.parse(transcript)
-    await this.writeJsonFile(this.transcriptPath(validated.id), validated)
+  /** Updates the output of the session item (for streaming completion). */
+  public async updateLastItemOutput(id: string, output: string): Promise<SessionDocument> {
+    assertSessionId(id)
+    const filePath = this.sessionPath(id)
+    return this.withFileLock(filePath, async () => {
+      const doc = await this.readSessionUnlocked(filePath)
+      if (doc.item) {
+        doc.item.output = output
+      }
+      doc.updatedAt = new Date().toISOString()
+      const validated = sessionDocumentSchema.parse(doc)
+      await this.writeJsonFileUnlocked(filePath, validated)
+      return validated
+    })
   }
 
-  /** Reads a transcript while its caller owns the file-operation lock. */
-  private async readTranscriptUnlocked(filePath: string): Promise<TranscriptDocument> {
+  /** Renames one session document. */
+  public async renameSession(id: string, title: string): Promise<SessionDocument> {
+    assertSessionId(id)
+    const normalizedTitle = title.trim().slice(0, 200)
+    if (!normalizedTitle) throw new Error('Session title cannot be empty.')
+    return this.updateSession(id, (doc) => {
+      doc.title = normalizedTitle
+      doc.isDefaultTitle = false
+      doc.updatedAt = new Date().toISOString()
+    })
+  }
+
+  /** Deletes all session documents and creates a fresh empty session. */
+  public async deleteAllSessions(): Promise<SessionSummary[]> {
+    const entries = await readdir(this.historiesPath, { withFileTypes: true })
+    await Promise.allSettled(
+      entries
+        .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
+        .map((entry) =>
+          this.withFileLock(join(this.historiesPath, entry.name), async () => {
+            try {
+              await unlink(join(this.historiesPath, entry.name))
+            } catch (error) {
+              if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+            }
+          }),
+        ),
+    )
+    await this.createSession()
+    return this.listSessions()
+  }
+
+  /** Deletes a session document, preserving at least one empty session. */
+  public async deleteSession(id: string): Promise<SessionSummary[]> {
+    assertSessionId(id)
+    const filePath = this.sessionPath(id)
+    await this.withFileLock(filePath, async () => {
+      try {
+        await unlink(filePath)
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+      }
+    })
+    let list = await this.listSessions()
+    if (list.length === 0) {
+      await this.createSession()
+      list = await this.listSessions()
+    }
+    return list
+  }
+
+  /** Reads one session while tolerating malformed entries. */
+  private async tryReadSession(filePath: string): Promise<SessionDocument | null> {
+    try {
+      return await this.withFileLock(filePath, () => this.readSessionUnlocked(filePath))
+    } catch {
+      return null
+    }
+  }
+
+  /** Applies one session mutation without allowing another operation to interleave. */
+  private async updateSession(
+    id: string,
+    update: (doc: SessionDocument) => void,
+  ): Promise<SessionDocument> {
+    assertSessionId(id)
+    const filePath = this.sessionPath(id)
+    return this.withFileLock(filePath, async () => {
+      const doc = await this.readSessionUnlocked(filePath)
+      update(doc)
+      const validated = sessionDocumentSchema.parse(doc)
+      await this.writeJsonFileUnlocked(filePath, validated)
+      return validated
+    })
+  }
+
+  /** Validates and writes a complete session document. */
+  private async writeSession(document: SessionDocument): Promise<void> {
+    const validated = sessionDocumentSchema.parse(document)
+    await this.writeJsonFile(this.sessionPath(validated.id), validated)
+  }
+
+  /** Reads a session while its caller owns the file-operation lock. */
+  private async readSessionUnlocked(filePath: string): Promise<SessionDocument> {
     const value: unknown = JSON.parse(await readFile(filePath, 'utf8'))
-    return transcriptSchema.parse(migrateTranscript(value))
+    return sessionDocumentSchema.parse(value)
   }
 
-  /** Resolves a validated transcript identifier to its JSON file. */
-  private transcriptPath(id: string): string {
-    return join(this.transcriptsPath, `${id}.json`)
+  /** Resolves a validated session identifier to its JSON file. */
+  private sessionPath(id: string): string {
+    return join(this.historiesPath, `${id}.json`)
   }
 
   /** Serializes and writes one JSON value directly to its destination file. */
@@ -352,6 +275,16 @@ export default class StorageService {
   /** Writes one complete JSON payload while its caller owns the file-operation lock. */
   private async writeJsonFileUnlocked(filePath: string, value: unknown): Promise<void> {
     await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8')
+  }
+
+  /** Reads settings without file-locking (caller must hold the lock). */
+  private async loadSettingsUnlocked(): Promise<AppSettings> {
+    try {
+      const content = await readFile(this.settingsPath, 'utf8')
+      return parsePersistedSettings(JSON.parse(content) as unknown)
+    } catch {
+      return parsePersistedSettings(null)
+    }
   }
 
   /** Runs one operation after every earlier operation targeting the same file. */
@@ -372,7 +305,7 @@ export default class StorageService {
     }
   }
 
-  /** Removes only obsolete temporary files created by pre-v3 direct-write builds. */
+  /** Removes only obsolete temporary files. */
   private async removeObsoleteTemporaryFiles(directoryPath: string): Promise<void> {
     const entries = await readdir(directoryPath, { withFileTypes: true })
     await Promise.allSettled(

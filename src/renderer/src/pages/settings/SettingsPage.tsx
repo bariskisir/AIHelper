@@ -2,14 +2,14 @@
  * Renders the reusable settings shell and delegates each category to an isolated section.
  */
 
-import { AudioLines, Info, Languages, RefreshCw, Settings2 } from 'lucide-react'
+import { Cpu, Info, RefreshCw, Settings2, Sliders } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@renderer/store'
 import { setSettingsSection, type SettingsSection } from '@renderer/store/appSlice'
 import AboutSettingsSection from './sections/AboutSettingsSection'
 import GeneralSettingsSection from './sections/GeneralSettingsSection'
-import TranscriptionSettingsSection from './sections/TranscriptionSettingsSection'
-import TranslationSettingsSection from './sections/TranslationSettingsSection'
+import ProviderSettingsSection from './sections/ProviderSettingsSection'
+import SystemPromptsSettingsSection from './sections/SystemPromptsSettingsSection'
 import UpdatesSettingsSection from './sections/UpdatesSettingsSection'
 import styles from './SettingsPage.module.scss'
 
@@ -24,24 +24,16 @@ const SettingsPage = (): React.JSX.Element => {
     icon: React.JSX.Element
   }> = [
     { key: 'general', label: t('settings.general'), icon: <Settings2 size={17} /> },
-    {
-      key: 'transcription',
-      label: t('settings.transcription'),
-      icon: <AudioLines size={17} />,
-    },
-    {
-      key: 'translation',
-      label: t('settings.translation'),
-      icon: <Languages size={17} />,
-    },
+    { key: 'provider', label: t('settings.provider'), icon: <Cpu size={17} /> },
+    { key: 'prompts', label: t('settings.prompts'), icon: <Sliders size={17} /> },
     { key: 'updates', label: t('settings.updates'), icon: <RefreshCw size={17} /> },
     { key: 'about', label: t('settings.about'), icon: <Info size={17} /> },
   ]
 
   /** Resolves the active category component without keeping inactive forms mounted. */
   const renderSection = (): React.JSX.Element => {
-    if (section === 'transcription') return <TranscriptionSettingsSection />
-    if (section === 'translation') return <TranslationSettingsSection />
+    if (section === 'provider') return <ProviderSettingsSection />
+    if (section === 'prompts') return <SystemPromptsSettingsSection />
     if (section === 'updates') return <UpdatesSettingsSection />
     if (section === 'about') return <AboutSettingsSection />
     return <GeneralSettingsSection />

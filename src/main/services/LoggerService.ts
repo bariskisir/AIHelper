@@ -23,8 +23,8 @@ export default class LoggerService {
     private readonly logsDirectory: string,
     level: LogLevel,
   ) {
-    this.appLogger = electronLog.create({ logId: 'transcript-app' })
-    this.errorLogger = electronLog.create({ logId: 'transcript-errors' })
+    this.appLogger = electronLog.create({ logId: 'aihelper-app' })
+    this.errorLogger = electronLog.create({ logId: 'aihelper-errors' })
     this.configureLogger(this.appLogger, 'app')
     this.configureLogger(this.errorLogger, 'app-error')
     this.setLevel(level)

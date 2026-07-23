@@ -1,69 +1,124 @@
 /**
- * Verifies persisted application settings defaults and schema migrations.
+ * Tests settings schema validation, patch parsing, and persisted settings recovery.
  */
 
 import { describe, expect, it } from 'vitest'
+import {
+  parsePersistedSettings,
+  settingsPatchSchema,
+  settingsSchema,
+} from '../src/main/settingsSchema'
 import { DEFAULT_SETTINGS } from '../src/shared/types'
-import { parsePersistedSettings, settingsPatchSchema } from '../src/main/settingsSchema'
 
-describe('settings schema migrations', () => {
-  it('migrates version 2 settings to the default 24-hour clock', () => {
-    const legacySettings: Record<string, unknown> = {
+describe('settingsSchema', () => {
+  it('accepts valid full settings', () => {
+    const result = settingsSchema.safeParse(DEFAULT_SETTINGS)
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects settings with an invalid locale', () => {
+    const result = settingsSchema.safeParse({
+      ...DEFAULT_SETTINGS,
+      uiLanguage: 'ja',
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects settings with an invalid theme', () => {
+    const result = settingsSchema.safeParse({
+      ...DEFAULT_SETTINGS,
+      theme: 'blue',
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects settings with an invalid log level', () => {
+    const result = settingsSchema.safeParse({
+      ...DEFAULT_SETTINGS,
+      logLevel: 'trace',
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects settings with wrong revision', () => {
+    const result = settingsSchema.safeParse({
       ...DEFAULT_SETTINGS,
       settingsRevision: 2,
-      transcriptionProvider: undefined,
-      transcriptionProviderSettings: undefined,
-      translationEnabled: undefined,
-      translationTargetLanguage: 'none',
-      language: 'tr',
-      endpointingMs: 250,
-    }
-    delete legacySettings.timeFormat
-
-    const settings = parsePersistedSettings(legacySettings)
-
-    expect(settings.settingsRevision).toBe(1)
-    expect(settings.timeFormat).toBe('24-hour')
-    expect(settings.transcriptionProvider).toBe('deepgram')
-    expect(settings.transcriptionProviderSettings.deepgram).toMatchObject({
-      language: 'tr',
-      endpointingMs: 250,
     })
-    expect(settings).not.toHaveProperty('language')
-    expect(settings).not.toHaveProperty('endpointingMs')
-    expect(settings.translationProvider).toBe('google')
-    expect(settings.translationEnabled).toBe(false)
-    expect(settings.translationTargetLanguage).toBe('tr')
+    expect(result.success).toBe(false)
   })
 
-  it('enables translation when migrating a legacy real target language', () => {
-    const settings = parsePersistedSettings({
+  it('rejects overly long model names', () => {
+    const result = settingsSchema.safeParse({
       ...DEFAULT_SETTINGS,
-      settingsRevision: 5,
-      translationEnabled: undefined,
-      translationTargetLanguage: 'de',
+      chatGptModel: 'a'.repeat(101),
     })
+    expect(result.success).toBe(false)
+  })
+})
 
-    expect(settings.translationEnabled).toBe(true)
-    expect(settings.translationTargetLanguage).toBe('de')
+describe('settingsPatchSchema', () => {
+  it('accepts a partial patch with one field', () => {
+    const result = settingsPatchSchema.safeParse({ compactMode: true })
+    expect(result.success).toBe(true)
   })
 
-  it('accepts bounded settings patches and rejects unrelated configuration keys', () => {
-    expect(
-      settingsPatchSchema.parse({
-        theme: 'dark',
-        translationEnabled: true,
-        transcriptionProviderSettings: { deepgram: { endpointingMs: 250 } },
-      }),
-    ).toEqual({
+  it('rejects an empty patch', () => {
+    const result = settingsPatchSchema.safeParse({})
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects a patch with the reserved settingsRevision field', () => {
+    const result = settingsPatchSchema.safeParse({ settingsRevision: 1 as const })
+    expect(result.success).toBe(false)
+  })
+
+  it('accepts patches with multiple valid fields', () => {
+    const result = settingsPatchSchema.safeParse({
       theme: 'dark',
-      translationEnabled: true,
-      transcriptionProviderSettings: { deepgram: { endpointingMs: 250 } },
+      compactMode: true,
+      alwaysOnTop: true,
     })
-    expect(() => settingsPatchSchema.parse({})).toThrow('At least one setting must be provided.')
-    expect(() => settingsPatchSchema.parse({ theme: 'dark', unrelated: true })).toThrow()
-    expect(() => settingsPatchSchema.parse({ endpointingMs: 250 })).toThrow()
-    expect(() => settingsPatchSchema.parse({ translationTargetLanguage: 'none' })).toThrow()
-    expect(() => settingsPatchSchema.parse({ settingsRevision: 1 })).toThrow()
+    expect(result.success).toBe(true)
+  })
+})
+
+describe('parsePersistedSettings', () => {
+  it('returns default settings for null input', () => {
+    const result = parsePersistedSettings(null)
+    expect(result).toEqual(DEFAULT_SETTINGS)
+  })
+
+  it('returns default settings for non-object input', () => {
+    const result = parsePersistedSettings('invalid')
+    expect(result).toEqual(DEFAULT_SETTINGS)
+  })
+
+  it('merges persisted fields with defaults', () => {
+    const result = parsePersistedSettings({
+      compactMode: true,
+      alwaysOnTop: true,
+      settingsRevision: 1,
+    })
+    expect(result.compactMode).toBe(true)
+    expect(result.alwaysOnTop).toBe(true)
+    expect(result.settingsRevision).toBe(1)
+  })
+
+  it('preserves valid locale from partial data', () => {
+    const result = parsePersistedSettings({ uiLanguage: 'tr' })
+    expect(result.uiLanguage).toBe('tr')
+  })
+
+  it('ignores invalid fields in persisted data', () => {
+    const result = parsePersistedSettings({ unknownField: 123, theme: 'dark' })
+    expect(result.theme).toBe('dark')
+  })
+
+  it('fills missing fields with defaults', () => {
+    const result = parsePersistedSettings({})
+    expect(result.uiLanguage).toBe('en')
+    expect(result.theme).toBe('system')
+    expect(result.logLevel).toBe('info')
   })
 })

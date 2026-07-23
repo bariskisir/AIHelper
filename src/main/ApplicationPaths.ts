@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Defines the durable, log, and isolated Electron runtime directories for the application.
  */
 
@@ -12,17 +12,15 @@ export interface ApplicationPaths {
   logsRoot: string
   runtimeRoot: string
   sessionRoot: string
-  legacyRoot: string
 }
 
 /** Configures Electron paths before ready so Chromium files stay outside durable app data. */
 export const configureApplicationPaths = (): ApplicationPaths => {
-  const applicationDataRoot = join(app.getPath('appData'), 'Transcript')
+  const applicationDataRoot = join(app.getPath('appData'), 'AIHelper')
   const dataRoot = join(applicationDataRoot, 'Data')
   const logsRoot = join(applicationDataRoot, 'Logs')
   const runtimeRoot = join(applicationDataRoot, 'Runtime')
   const sessionRoot = join(runtimeRoot, 'Session')
-  const legacyRoot = join(app.getPath('appData'), ['transcript', 'desktop'].join('-'))
 
   ;[applicationDataRoot, dataRoot, logsRoot, runtimeRoot, sessionRoot].forEach((directory) => {
     mkdirSync(directory, { recursive: true })
@@ -37,6 +35,5 @@ export const configureApplicationPaths = (): ApplicationPaths => {
     logsRoot,
     runtimeRoot,
     sessionRoot,
-    legacyRoot,
   }
 }

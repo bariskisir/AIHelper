@@ -1,8 +1,8 @@
-/**
- * Provides consistent formatting helpers for transcript timestamps and summaries.
+﻿/**
+ * Provides consistent formatting helpers for dates and durations.
  */
 
-import type { TimeFormat, TranscriptDocument, TranscriptSummary } from '@shared/types'
+import type { TimeFormat } from '@shared/types'
 
 /** Formats elapsed milliseconds as mm:ss or hh:mm:ss. */
 export const formatDuration = (milliseconds: number): string => {
@@ -32,19 +32,3 @@ export const formatDate = (isoDate: string, timeFormat: TimeFormat): string => {
 
   return `${day}.${month}.${year} ${localHours.toString().padStart(2, '0')}:${minutes}`
 }
-
-/** Converts a complete transcript into a compact history summary. */
-export const toTranscriptSummary = (document: TranscriptDocument): TranscriptSummary => ({
-  id: document.id,
-  title: document.title,
-  isDefaultTitle: document.isDefaultTitle,
-  language: document.language,
-  createdAt: document.createdAt,
-  updatedAt: document.updatedAt,
-  durationMs: document.durationMs,
-  segmentCount: document.segments.length,
-  preview: document.segments
-    .map((segment) => segment.text)
-    .join(' ')
-    .slice(0, 140),
-})

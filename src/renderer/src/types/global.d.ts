@@ -1,11 +1,11 @@
-/**
+﻿/**
  * Adds the typed preload bridge to the renderer Window interface.
  */
 
-import type { TranscriptApi } from '@shared/types'
+import type { AiHelperApi } from '@shared/types'
 
 declare global {
   interface Window {
-    transcript: TranscriptApi
+    aihelper: AiHelperApi
   }
 }

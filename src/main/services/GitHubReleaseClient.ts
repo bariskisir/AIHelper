@@ -1,5 +1,5 @@
 /**
- * Retrieves published Transcript releases and downloads verified Windows installers from GitHub.
+ * Retrieves published AIHelper releases and downloads verified Windows installers from GitHub.
  */
 
 import { createHash } from 'node:crypto'
@@ -7,9 +7,9 @@ import { mkdir, open, unlink } from 'node:fs/promises'
 import { basename, join } from 'node:path'
 import { z } from 'zod'
 
-const RELEASES_API_URL = 'https://api.github.com/repos/bariskisir/transcript/releases/latest'
+const RELEASES_API_URL = 'https://api.github.com/repos/bariskisir/aihelper/releases/latest'
 const GITHUB_ORIGIN = 'https://github.com'
-const RELEASE_DOWNLOAD_PATH_PREFIX = '/bariskisir/transcript/releases/download/'
+const RELEASE_DOWNLOAD_PATH_PREFIX = '/bariskisir/aihelper/releases/download/'
 const RELEASE_CACHE_DURATION_MS = 5 * 60 * 1_000
 const REQUEST_TIMEOUT_MS = 10 * 60 * 1_000
 
@@ -85,7 +85,7 @@ export const selectWindowsInstaller = (
   architecture: NodeJS.Architecture,
 ): GitHubReleaseAsset => {
   const releaseArchitecture = getReleaseArchitecture(architecture)
-  const expectedName = `transcript-${release.version}-windows-${releaseArchitecture}-setup.exe`
+  const expectedName = `aihelper-${release.version}-windows-${releaseArchitecture}-setup.exe`
   const asset = release.assets.find(
     (candidate) => candidate.name.toLowerCase() === expectedName.toLowerCase(),
   )
@@ -120,7 +120,7 @@ export default class GitHubReleaseClient {
     const response = await this.fetcher(RELEASES_API_URL, {
       headers: {
         Accept: 'application/vnd.github+json',
-        'User-Agent': 'Transcript-Desktop',
+        'User-Agent': 'AIHelper-Desktop',
         'X-GitHub-Api-Version': '2022-11-28',
       },
       signal: AbortSignal.timeout(30_000),
@@ -141,7 +141,7 @@ export default class GitHubReleaseClient {
     parseVersion(version)
     return {
       version,
-      name: parsed.name ?? `Transcript v${version}`,
+      name: parsed.name ?? `AI Helper v${version}`,
       ...(parsed.body ? { releaseNotes: parsed.body } : {}),
       pageUrl: parsed.html_url,
       assets: parsed.assets.map((asset) => ({
@@ -163,7 +163,7 @@ export default class GitHubReleaseClient {
     await mkdir(destinationDirectory, { recursive: true })
     const filePath = join(destinationDirectory, asset.name)
     const response = await this.fetcher(asset.downloadUrl, {
-      headers: { 'User-Agent': 'Transcript-Desktop' },
+      headers: { 'User-Agent': 'AIHelper-Desktop' },
       redirect: 'follow',
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     })

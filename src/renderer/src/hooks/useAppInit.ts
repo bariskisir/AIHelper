@@ -8,10 +8,13 @@ import i18n from '@renderer/i18n'
 import { createLogger } from '@renderer/services/LoggerService'
 import {
   hydrate,
-  receiveTranscriptResult,
-  receiveTranslationResult,
-  setSessionState,
+  setChatGptState,
+  setCurrentSession,
+  setSessions,
   setUpdateState,
+  appendScanOutput,
+  completeScan,
+  setPendingInputText,
 } from '@renderer/store/appSlice'
 import { useAppDispatch } from '@renderer/store'
 
@@ -29,24 +32,34 @@ export const useAppInit = (): void => {
 
   useEffect(() => {
     let active = true
-    const cleanup = [
-      window.transcript.onSessionState((event) => dispatch(setSessionState(event))),
-      window.transcript.onTranscriptResult((event) => dispatch(receiveTranscriptResult(event))),
-      window.transcript.onTranslationResult((event) => dispatch(receiveTranslationResult(event))),
-      window.transcript.onUpdateState((event) => dispatch(setUpdateState(event))),
-      window.transcript.onError((event) => {
+    const cleanups = [
+      window.aihelper.onAiResult((event) => {
+        if (event.inputText !== undefined) {
+          dispatch(setPendingInputText(event.inputText))
+        }
+        if (event.isComplete) {
+          dispatch(completeScan())
+        } else if (event.delta) {
+          dispatch(appendScanOutput(event.delta))
+        }
+      }),
+      window.aihelper.onSessionUpdated((event) => {
+        dispatch(setSessions(event.sessions))
+        if (event.currentSession) {
+          dispatch(setCurrentSession(event.currentSession))
+        }
+      }),
+      window.aihelper.onChatGptState((state) => {
+        dispatch(setChatGptState(state))
+      }),
+      window.aihelper.onUpdateState((event) => dispatch(setUpdateState(event))),
+      window.aihelper.onError((event) => {
         logger.error('Main process reported an application error.', event.message)
-        void messageRef.current.error(
-          i18n.t(
-            event.context === 'translation' ? 'errors.translationDetails' : 'errors.runtimeDetails',
-            { details: event.message },
-          ),
-          8,
-        )
+        void messageRef.current.error(event.message, 8)
       }),
     ]
 
-    void window.transcript
+    void window.aihelper
       .bootstrap()
       .then(async (payload) => {
         if (!active) return
@@ -56,12 +69,12 @@ export const useAppInit = (): void => {
       })
       .catch((error) => {
         logger.error('Renderer bootstrap failed.', error)
-        void messageRef.current.error(i18n.t('errors.generic'))
+        void messageRef.current.error('Application failed to initialize.')
       })
 
     return () => {
       active = false
-      cleanup.forEach((unsubscribe) => {
+      cleanups.forEach((unsubscribe) => {
         unsubscribe()
       })
     }

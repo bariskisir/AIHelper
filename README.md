@@ -1,27 +1,23 @@
-# Transcript
+﻿# AIHelper
 
-Transcript is an Electron desktop application that captures microphone and speaker audio independently and provides both real-time transcription and translation using Google and Bing.
+AIHelper is an Electron desktop application that provides AI-powered text and image analysis using ChatGPT.
 
-Chrome Transcript Extension -> https://github.com/bariskisir/ChromeTranscript
-
-Chrome Live Translator Extension -> https://github.com/bariskisir/ChromeLiveTranslator
-
-![Transcript interface](images/interface.png)
-![Transcript interface](images/interface2.png)
+![AIHelper interface](images/interface.png)
+![AIHelper interface](images/interface2.png)
 
 ---
 
 ## Install
 
-1. Download the latest release for your platform from [Releases](https://github.com/bariskisir/transcript/releases/latest).
+1. Download the latest release for your platform from [Releases](https://github.com/bariskisir/aihelper/releases/latest).
 2. Install or extract the package.
-3. Run **Transcript**.
+3. Run **AIHelper**.
 
 ## Development
 
 ```bash
-git clone https://github.com/bariskisir/transcript.git
-cd transcript
+git clone https://github.com/bariskisir/aihelper.git
+cd aihelper
 npm run dev
 ```
 

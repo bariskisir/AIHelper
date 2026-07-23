@@ -1,5 +1,5 @@
-/**
- * Renders the persistent Transcript sidebar and global window controls.
+﻿/**
+ * Renders the persistent AIHelper sidebar with global window controls.
  */
 
 import { Button, Tooltip } from 'antd'
@@ -27,12 +27,10 @@ const AppSidebar = ({ onSettingsChange }: AppSidebarProps): React.JSX.Element =>
   const settings = useAppSelector((state) => state.app.settings)
   const { t } = useTranslation()
 
-  /** Persists a global setting from the sidebar. */
   const update = async (patch: AppSettingsPatch): Promise<void> => {
     await onSettingsChange(patch)
   }
 
-  /** Returns the icon matching the configured theme mode. */
   const themeIcon = (): React.JSX.Element => {
     if (settings.theme === 'light') return <Sun size={18} />
     if (settings.theme === 'dark') return <Moon size={18} />

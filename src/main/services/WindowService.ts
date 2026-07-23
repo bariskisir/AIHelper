@@ -1,13 +1,11 @@
-/**
- * Owns the main Electron window, navigation policy, and media permission boundary.
+﻿/**
+ * Owns the main Electron window, navigation policy, and security boundary.
  */
 
 import { join } from 'node:path'
 import { app, BrowserWindow } from 'electron'
 import { isTrustedRendererNavigation } from '../security/RendererNavigationPolicy'
 import type LoggerService from './LoggerService'
-
-const ALLOWED_MEDIA_PERMISSIONS = new Set(['media', 'display-capture', 'speaker-selection'])
 
 export default class WindowService {
   private mainWindow: BrowserWindow | null = null
@@ -18,7 +16,7 @@ export default class WindowService {
     return this.mainWindow && !this.mainWindow.isDestroyed() ? this.mainWindow : null
   }
 
-  /** Creates and loads a hardened Transcript desktop window. */
+  /** Creates and loads a hardened AIHelper desktop window. */
   public async createWindow(logger: LoggerService): Promise<BrowserWindow> {
     const window = new BrowserWindow({
       width: 1180,
@@ -27,7 +25,7 @@ export default class WindowService {
       minHeight: 300,
       show: false,
       backgroundColor: '#181818',
-      title: 'Transcript',
+      title: 'AI Helper',
       titleBarStyle: 'hidden',
       titleBarOverlay: { color: '#1f1f1f', symbolColor: '#ffffff99', height: 42 },
       webPreferences: {
@@ -37,13 +35,12 @@ export default class WindowService {
         sandbox: true,
         webSecurity: true,
         devTools: !app.isPackaged,
-        partition: 'transcript-session',
+        partition: 'aihelper-session',
       },
     })
     this.mainWindow = window
     this.configureRendererDiagnostics(window, logger)
     this.configureSecurity(window)
-    this.configureMediaAccess(window)
     window.once('ready-to-show', () => window.show())
     window.once('closed', () => {
       if (this.mainWindow === window) this.mainWindow = null
@@ -111,26 +108,6 @@ export default class WindowService {
     window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
     window.webContents.on('will-navigate', (event, url) => {
       if (!this.isTrustedRendererUrl(url)) event.preventDefault()
-    })
-  }
-
-  /** Allows microphone and Windows loopback capture only for the main renderer. */
-  private configureMediaAccess(window: BrowserWindow): void {
-    const appSession = window.webContents.session
-    appSession.setPermissionRequestHandler((webContents, permission, callback) => {
-      callback(
-        webContents.id === window.webContents.id && ALLOWED_MEDIA_PERMISSIONS.has(permission),
-      )
-    })
-    appSession.setPermissionCheckHandler((webContents, permission) => {
-      return webContents?.id === window.webContents.id && ALLOWED_MEDIA_PERMISSIONS.has(permission)
-    })
-    appSession.setDisplayMediaRequestHandler((request, callback) => {
-      if (request.frame !== window.webContents.mainFrame || process.platform !== 'win32') {
-        callback({})
-        return
-      }
-      callback({ video: request.frame, audio: 'loopback' })
     })
   }
 

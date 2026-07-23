@@ -1,7 +1,7 @@
 {
-  "name": "transcript",
-  "version": "3.2.0",
-  "description": "Secure real-time desktop transcription",
+  "name": "aihelper",
+  "version": "1.0.0",
+  "description": "AI-powered text and image analysis desktop application",
   "main": "./out/main/index.js",
   "author": "bariskisir",
   "license": "MIT",
@@ -25,9 +25,9 @@
     "release": "npm run package:win"
   },
   "dependencies": {
-    "bing-translate-api": "4.2.0",
     "electron-log": "5.4.4",
-    "ws": "8.21.1",
+    "react-markdown": "^10.1.0",
+    "tesseract.js": "7.0.0",
     "zod": "4.4.3"
   },
   "devDependencies": {
@@ -36,7 +36,6 @@
     "@types/node": "26.1.1",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
-    "@types/ws": "8.18.1",
     "@vitejs/plugin-react": "6.0.3",
     "antd": "6.5.1",
     "electron": "43.2.0",
@@ -59,8 +58,8 @@
     "node": ">=24.0.0"
   },
   "build": {
-    "appId": "com.bariskisir.transcript",
-    "productName": "Transcript",
+    "appId": "com.bariskisir.aihelper",
+    "productName": "AI Helper",
     "asar": true,
     "directories": {
       "output": "release"
@@ -82,7 +81,7 @@
           ]
         }
       ],
-      "artifactName": "transcript-${version}-windows-${arch}-setup.${ext}"
+      "artifactName": "aihelper-${version}-windows-${arch}-setup.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -90,15 +89,15 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Transcript"
+      "shortcutName": "AI Helper"
     },
     "mac": {
       "icon": "build/icon.png",
       "target": "dmg",
       "category": "public.app-category.productivity",
-      "artifactName": "Transcript-${version}-mac-${arch}.${ext}",
+      "artifactName": "AI-Helper-${version}-mac-${arch}.${ext}",
       "extendInfo": {
-        "NSMicrophoneUsageDescription": "Transcript needs microphone access to convert speech into text."
+        "NSMicrophoneUsageDescription": "AI Helper needs microphone access for voice input."
       }
     },
     "linux": {
@@ -107,7 +106,7 @@
         "AppImage"
       ],
       "category": "Utility",
-      "artifactName": "Transcript-${version}-linux-${arch}.${ext}"
+      "artifactName": "AI-Helper-${version}-linux-${arch}.${ext}"
     }
   }
 }

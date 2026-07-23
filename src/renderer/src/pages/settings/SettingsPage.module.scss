@@ -131,6 +131,46 @@
   gap: 8px;
 }
 
+.providerModalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rowControl {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.selectW200 {
+  width: 200px;
+}
+
+.inputW300 {
+  width: 300px;
+}
+
+.promptTextArea {
+  width: 100%;
+}
+
+.promptSelect {
+  width: 200px;
+}
+
+.apiHostInput {
+  width: 300px;
+}
+
+.modelFilterInput {
+  width: 200;
+}
+
+.modalInputMb {
+  margin-bottom: 12px;
+}
+
 .compactControl {
   width: 170px;
 }

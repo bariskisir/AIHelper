@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Wraps fallible desktop-shell commands with consistent renderer diagnostics.
  */
 
@@ -18,7 +18,7 @@ export const useDesktopActions = () => {
   const openExternal = useCallback(
     async (url: string): Promise<void> => {
       try {
-        await window.transcript.openExternal(url)
+        await window.aihelper.openExternal(url)
       } catch (error) {
         logger.error('External URL could not be opened.', error)
         void message.error(t('errors.generic'))
@@ -30,26 +30,26 @@ export const useDesktopActions = () => {
   /** Opens the application log directory in the operating-system file manager. */
   const openLogsDirectory = useCallback(async (): Promise<void> => {
     try {
-      await window.transcript.openLogsDirectory()
+      await window.aihelper.openLogsDirectory()
     } catch (error) {
       logger.error('Log directory could not be opened.', error)
       void message.error(t('errors.generic'))
     }
   }, [message, t])
 
-  /** Checks GitHub Releases while preventing rejected IPC calls from escaping the UI. */
+  /** Checks GitHub Releases. */
   const checkForUpdates = useCallback(async (): Promise<void> => {
     try {
-      await window.transcript.checkForUpdates()
+      await window.aihelper.checkForUpdates()
     } catch (error) {
       logger.error('Application update check failed.', error)
     }
   }, [])
 
-  /** Installs a downloaded update while reporting a rejected restart request. */
+  /** Installs a downloaded update. */
   const installUpdate = useCallback(async (): Promise<void> => {
     try {
-      await window.transcript.installUpdate()
+      await window.aihelper.installUpdate()
     } catch (error) {
       logger.error('Downloaded application update could not be installed.', error)
       void message.error(t('errors.generic'))

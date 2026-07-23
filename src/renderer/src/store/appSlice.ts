@@ -1,5 +1,5 @@
 /**
- * Stores application settings, runtime recording state, history, and update progress.
+ * Stores application settings, scan state, sessions, ChatGPT state, and update progress.
  */
 
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
@@ -7,17 +7,14 @@ import {
   DEFAULT_SETTINGS,
   type AppSettings,
   type BootstrapPayload,
-  type DeepgramBalance,
-  type SessionStateEvent,
-  type TranscriptDocument,
-  type TranscriptResultEvent,
-  type TranscriptSummary,
-  type TranslationResultEvent,
+  type ChatGptState,
+  type SessionDocument,
+  type SessionSummary,
   type UpdateStateEvent,
 } from '@shared/types'
 
 export type AppPage = 'home' | 'settings'
-export type SettingsSection = 'general' | 'transcription' | 'translation' | 'updates' | 'about'
+export type SettingsSection = 'general' | 'provider' | 'prompts' | 'updates' | 'about'
 
 export interface AppState {
   initialized: boolean
@@ -26,15 +23,19 @@ export interface AppState {
   settings: AppSettings
   platform: BootstrapPayload['platform']
   version: string
-  hasApiKey: boolean
-  apiBalance: DeepgramBalance[]
-  history: TranscriptSummary[]
-  currentTranscript: TranscriptDocument | null
-  session: SessionStateEvent
-  interim: { microphone: string; speaker: string }
-  levels: { microphone: number; speaker: number }
+  chatGpt: ChatGptState
+  sessions: SessionSummary[]
+  currentSession: SessionDocument | null
+  scanState: 'idle' | 'scanning' | 'cancelling'
+  scanOutput: string
+  /** Image being scanned right now — shown in input before session updates. */
+  pendingImage: string | null
+  /** OCR or input text being scanned right now — shown in input before session updates. */
+  pendingInputText: string | null
+  /** Scan mode currently in progress, for rendering the input area. */
+  pendingScanMode: 'text' | 'image' | null
   update: UpdateStateEvent
-  transcriptSidebarOpen: boolean
+  sessionsSidebarOpen: boolean
   compactMode: boolean
 }
 
@@ -45,15 +46,21 @@ const initialState: AppState = {
   settings: DEFAULT_SETTINGS,
   platform: 'win32',
   version: '0.0.0',
-  hasApiKey: false,
-  apiBalance: [],
-  history: [],
-  currentTranscript: null,
-  session: { state: 'idle' },
-  interim: { microphone: '', speaker: '' },
-  levels: { microphone: 0, speaker: 0 },
+  chatGpt: {
+    status: 'signed-out',
+    accountEmail: '',
+    limitLabel: '',
+    models: [],
+  },
+  sessions: [],
+  currentSession: null,
+  scanState: 'idle',
+  scanOutput: '',
+  pendingImage: null,
+  pendingInputText: null,
+  pendingScanMode: null,
   update: { state: 'idle' },
-  transcriptSidebarOpen: true,
+  sessionsSidebarOpen: true,
   compactMode: false,
 }
 
@@ -68,16 +75,15 @@ const appSlice = createSlice({
       state.settings = action.payload.settings
       state.platform = action.payload.platform
       state.version = action.payload.version
-      state.hasApiKey = action.payload.hasApiKey
-      state.history = action.payload.transcripts
-      state.currentTranscript = action.payload.currentTranscript
+      state.chatGpt = action.payload.chatGpt
+      state.sessions = action.payload.sessions
+      state.currentSession = action.payload.currentSession
     },
     /** Opens a top-level application page. */
     setPage(state, action: PayloadAction<AppPage>) {
       state.page = action.payload
-      if (action.payload !== 'home') state.compactMode = false
     },
-    /** Selects the settings category shown when the settings page is opened. */
+    /** Selects the settings category. */
     setSettingsSection(state, action: PayloadAction<SettingsSection>) {
       state.settingsSection = action.payload
     },
@@ -85,93 +91,69 @@ const appSlice = createSlice({
     setSettings(state, action: PayloadAction<AppSettings>) {
       state.settings = action.payload
     },
-    /** Updates whether a Deepgram credential is available. */
-    setHasApiKey(state, action: PayloadAction<boolean>) {
-      state.hasApiKey = action.payload
+    /** Updates ChatGPT authentication and model state. */
+    setChatGptState(state, action: PayloadAction<ChatGptState>) {
+      state.chatGpt = action.payload
     },
-    /** Replaces optional Deepgram project balance data. */
-    setApiBalance(state, action: PayloadAction<DeepgramBalance[]>) {
-      state.apiBalance = action.payload
+    /** Replaces session summaries. */
+    setSessions(state, action: PayloadAction<SessionSummary[]>) {
+      state.sessions = action.payload
     },
-    /** Replaces transcript history from local storage. */
-    setHistory(state, action: PayloadAction<TranscriptSummary[]>) {
-      state.history = action.payload
-    },
-    /** Inserts a newly created summary at the front without duplicating its identifier. */
-    addHistorySummary(state, action: PayloadAction<TranscriptSummary>) {
-      state.history = [
-        action.payload,
-        ...state.history.filter((item) => item.id !== action.payload.id),
-      ]
-    },
-    /** Replaces a known summary in place, or inserts it when history was not yet synchronized. */
-    replaceHistorySummary(state, action: PayloadAction<TranscriptSummary>) {
-      const index = state.history.findIndex((item) => item.id === action.payload.id)
-      if (index === -1) state.history.unshift(action.payload)
-      else state.history[index] = action.payload
-    },
-    /** Removes one transcript summary by its durable identifier. */
-    removeHistorySummary(state, action: PayloadAction<string>) {
-      state.history = state.history.filter((item) => item.id !== action.payload)
-    },
-    /** Sets the transcript displayed in the main reading surface. */
-    setCurrentTranscript(state, action: PayloadAction<TranscriptDocument | null>) {
-      state.currentTranscript = action.payload
-      state.interim = { microphone: '', speaker: '' }
-    },
-    /** Refreshes a document only when it is still the active transcript. */
-    replaceCurrentTranscript(state, action: PayloadAction<TranscriptDocument>) {
-      if (state.currentTranscript?.id === action.payload.id) {
-        state.currentTranscript = action.payload
-        state.interim = { microphone: '', speaker: '' }
+    /** Sets the active session document. */
+    setCurrentSession(state, action: PayloadAction<SessionDocument | null>) {
+      const prevId = state.currentSession?.id
+      const next = action.payload
+      state.currentSession = next
+      state.scanOutput = ''
+
+      const latest = next?.item
+      // Session now owns the image — drop the temporary pending copy.
+      if (latest?.imageDataUrl) {
+        state.pendingImage = null
+        state.pendingScanMode = latest.scanMode
+      } else if (prevId !== next?.id) {
+        // User switched to a different session that has no image.
+        state.pendingImage = null
+        state.pendingScanMode = latest?.scanMode ?? null
       }
     },
-    /** Applies a recording lifecycle event. */
-    setSessionState(state, action: PayloadAction<SessionStateEvent>) {
-      state.session = action.payload
-      if (action.payload.state === 'idle') {
-        state.levels = { microphone: 0, speaker: 0 }
-        state.interim = { microphone: '', speaker: '' }
-      }
+    /** Set the image being scanned, shown in input immediately. */
+    setPendingImage(state, action: PayloadAction<string | null>) {
+      state.pendingImage = action.payload
     },
-    /** Applies one interim or final transcription result. */
-    receiveTranscriptResult(state, action: PayloadAction<TranscriptResultEvent>) {
-      const event = action.payload
-      if (event.isFinal) {
-        state.interim[event.source] = ''
-        if (event.segment && state.currentTranscript) {
-          state.currentTranscript.segments.push(event.segment)
-        }
-      } else if (!event.isFinal) {
-        state.interim[event.source] = event.text
-      }
+    /** Set the OCR or input text being scanned, shown in input immediately. */
+    setPendingInputText(state, action: PayloadAction<string | null>) {
+      state.pendingInputText = action.payload
     },
-    /** Appends one live translation only to its currently displayed transcript. */
-    receiveTranslationResult(state, action: PayloadAction<TranslationResultEvent>) {
-      if (state.currentTranscript?.id !== action.payload.transcriptId) return
-      const translation = action.payload.translation
-      if (
-        !state.currentTranscript.translations.some((candidate) => candidate.id === translation.id)
-      ) {
-        state.currentTranscript.translations.push(translation)
-      }
+    /** Starts a scan, clears output, and records the scan mode. */
+    startScan(state, action: PayloadAction<{ mode: 'text' | 'image' }>) {
+      state.scanState = 'scanning'
+      state.scanOutput = ''
+      state.pendingImage = null
+      state.pendingInputText = null
+      state.pendingScanMode = action.payload.mode
     },
-    /** Updates the live meter for one source. */
-    setAudioLevel(
-      state,
-      action: PayloadAction<{ source: 'microphone' | 'speaker'; level: number }>,
-    ) {
-      state.levels[action.payload.source] = action.payload.level
+    /** Appends streaming delta to the scan output. */
+    appendScanOutput(state, action: PayloadAction<string>) {
+      state.scanOutput += action.payload
+    },
+    /** Marks the scan as complete. Keeps pending image/output until session arrives. */
+    completeScan(state) {
+      state.scanState = 'idle'
+    },
+    /** Marks the scan as cancelled. */
+    cancelScan(state) {
+      state.scanState = 'cancelling'
     },
     /** Applies desktop updater progress. */
     setUpdateState(state, action: PayloadAction<UpdateStateEvent>) {
       state.update = action.payload
     },
-    /** Shows or hides the transcript management sidebar for the current app session. */
-    setTranscriptSidebarOpen(state, action: PayloadAction<boolean>) {
-      state.transcriptSidebarOpen = action.payload
+    /** Shows or hides the sessions sidebar. */
+    setSessionsSidebarOpen(state, action: PayloadAction<boolean>) {
+      state.sessionsSidebarOpen = action.payload
     },
-    /** Toggles the distraction-free workspace with title-bar recording controls. */
+    /** Toggles compact mode. */
     setCompactMode(state, action: PayloadAction<boolean>) {
       state.compactMode = action.payload
     },
@@ -179,25 +161,22 @@ const appSlice = createSlice({
 })
 
 export const {
-  addHistorySummary,
   hydrate,
-  receiveTranscriptResult,
-  receiveTranslationResult,
-  removeHistorySummary,
-  replaceCurrentTranscript,
-  replaceHistorySummary,
-  setApiBalance,
-  setAudioLevel,
-  setCurrentTranscript,
-  setHasApiKey,
-  setHistory,
   setPage,
-  setSessionState,
-  setSettings,
   setSettingsSection,
-  setCompactMode,
-  setTranscriptSidebarOpen,
+  setSettings,
+  setChatGptState,
+  setSessions,
+  setCurrentSession,
+  setPendingImage,
+  setPendingInputText,
+  startScan,
+  appendScanOutput,
+  completeScan,
+  cancelScan,
   setUpdateState,
+  setSessionsSidebarOpen,
+  setCompactMode,
 } = appSlice.actions
 
 export default appSlice.reducer

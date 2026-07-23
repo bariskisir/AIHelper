@@ -1,5 +1,5 @@
 /**
- * Renders application identity, author, repository, license, and support links.
+ * Renders application identity, author, repository, and license information.
  */
 
 import { Button, Tag } from 'antd'
@@ -11,7 +11,7 @@ import { useAppSelector } from '@renderer/store'
 import SettingLabel from '../components/SettingLabel'
 import styles from '../SettingsPage.module.scss'
 
-/** Displays reusable application metadata and Transcript-specific links. */
+/** Displays reusable application metadata and AIHelper-specific links. */
 const AboutSettingsSection = (): React.JSX.Element => {
   const version = useAppSelector((state) => state.app.version)
   const desktopActions = useDesktopActions()
@@ -24,7 +24,7 @@ const AboutSettingsSection = (): React.JSX.Element => {
         <img src={logoUrl} alt="" />
         <h2>{t('app.name')}</h2>
         <p>{t('app.tagline')}</p>
-        <Tag>{t('settings.version', { version })}</Tag>
+        <Tag>v{version}</Tag>
       </div>
       <section className={styles.settingGroup}>
         <div className={styles.settingRow}>
@@ -35,37 +35,22 @@ const AboutSettingsSection = (): React.JSX.Element => {
               className={styles.authorLink}
               onClick={() => void desktopActions.openExternal('https://www.bariskisir.com')}
             >
-              Barış Kısır
+              {t('settings.bariskisir')}
             </button>
           </div>
         </div>
         <div className={styles.settingRow}>
-          <SettingLabel title={t('settings.repository')} description="bariskisir/transcript" />
+          <SettingLabel title={t('settings.githubRepo')} description="bariskisir/aihelper" />
           <Button
             type="text"
             icon={<ExternalLink size={14} />}
             onClick={() =>
-              void desktopActions.openExternal('https://github.com/bariskisir/transcript')
+              void desktopActions.openExternal('https://github.com/bariskisir/aihelper')
             }
           />
         </div>
         <div className={styles.settingRow}>
-          <SettingLabel title={t('settings.license')} description={t('settings.privacy')} />
-        </div>
-        <div className={styles.settingRow}>
-          <SettingLabel
-            title={t('settings.deepgramDocumentation')}
-            description={t('settings.deepgramDocumentationDescription')}
-          />
-          <Button
-            type="text"
-            icon={<ExternalLink size={14} />}
-            onClick={() =>
-              void desktopActions.openExternal(
-                'https://developers.deepgram.com/docs/models-languages-overview',
-              )
-            }
-          />
+          <SettingLabel title={t('settings.license')} description="MIT" />
         </div>
         <div className={styles.settingRow}>
           <SettingLabel

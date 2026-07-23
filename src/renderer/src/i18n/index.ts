@@ -13,18 +13,15 @@ import pt from './locales/pt'
 import tr from './locales/tr'
 import zh from './locales/zh'
 
-type WidenLocale<T> = T extends string ? string : { [Key in keyof T]: WidenLocale<T[Key]> }
-type LocaleResource = WidenLocale<typeof en>
-
-const resources = {
-  en: { translation: en },
-  tr: { translation: tr },
-  de: { translation: de },
-  fr: { translation: fr },
-  pt: { translation: pt },
-  zh: { translation: zh },
-  es: { translation: es },
-} satisfies Record<AppLocale, { translation: LocaleResource }>
+const resources: Record<string, { translation: Record<string, unknown> }> = {
+  en: { translation: en as unknown as Record<string, unknown> },
+  tr: { translation: tr as unknown as Record<string, unknown> },
+  de: { translation: de as unknown as Record<string, unknown> },
+  fr: { translation: fr as unknown as Record<string, unknown> },
+  pt: { translation: pt as unknown as Record<string, unknown> },
+  zh: { translation: zh as unknown as Record<string, unknown> },
+  es: { translation: es as unknown as Record<string, unknown> },
+}
 
 /** Resolves the operating-system locale until persisted settings finish loading. */
 export const getInitialLanguage = (): AppLocale => {

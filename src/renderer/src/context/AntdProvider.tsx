@@ -1,5 +1,5 @@
 /**
- * Applies Transcript Ant Design component tokens and locale data.
+ * Applies AI Helper Ant Design component tokens and locale data.
  */
 
 import type { PropsWithChildren } from 'react'

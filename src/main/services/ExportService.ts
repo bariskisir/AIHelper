@@ -1,45 +1,22 @@
 /**
- * Renders transcript documents into portable text and lossless JSON formats.
+ * Renders session documents into portable text and lossless JSON formats.
  */
 
-import type { TranscriptDocument, TranscriptFormat } from '@shared/types'
-import type { TranslationProvider, TranslationTargetLanguage } from '@shared/translation'
+import type { ExportFormat, SessionDocument } from '@shared/types'
 
-/** Formats a millisecond offset as an elapsed timestamp. */
-const formatTimestamp = (offsetMs: number): string => {
-  const totalSeconds = Math.floor(offsetMs / 1000)
-  return `${Math.floor(totalSeconds / 60)
-    .toString()
-    .padStart(2, '0')}:${(totalSeconds % 60).toString().padStart(2, '0')}`
-}
-
-/** Renders one transcript in the requested export format. */
-export const renderTranscript = (
-  transcript: TranscriptDocument,
-  format: TranscriptFormat,
-  includeTranslation = false,
-  provider: TranslationProvider = 'google',
-  targetLanguage: TranslationTargetLanguage = 'tr',
-): string => {
-  if (format === 'json') return `${JSON.stringify(transcript, null, 2)}\n`
-  const lines = transcript.segments.map((segment) => {
-    const source = segment.source === 'microphone' ? 'Microphone' : 'Speaker'
-    return `[${formatTimestamp(segment.offsetMs)}] ${source}: ${segment.text}`
-  })
-  const source = `${transcript.title}\n${'='.repeat(transcript.title.length)}\n\n${lines.join('\n')}\n`
-  if (!includeTranslation) return source
-
-  const translatedText = [...transcript.translations]
-    .filter(
-      (translation) =>
-        translation.provider === provider && translation.targetLanguage === targetLanguage,
-    )
-    .sort((left, right) => left.sourceStartIndex - right.sourceStartIndex)
-    .map((translation) => translation.text.trim())
-    .filter(Boolean)
-    .join(' ')
-  if (!translatedText) return source
-
-  const heading = `Translation (${targetLanguage})`
-  return `${source}\n${heading}\n${'='.repeat(heading.length)}\n\n${translatedText}\n`
+/** Renders one or all sessions in the requested export format. */
+export const renderSessions = (sessions: SessionDocument[], format: ExportFormat): string => {
+  if (format === 'json') {
+    return `${JSON.stringify(sessions.length === 1 ? sessions[0] : sessions, null, 2)}\n`
+  }
+  return sessions
+    .map((session) => {
+      const header = `${session.title}\n${'='.repeat(session.title.length)}\n`
+      if (!session.item) return `${header}\n(Empty session)\n`
+      const item = session.item
+      const mode = item.scanMode === 'image' ? 'Image Scan' : 'Text Scan'
+      const meta = `${mode} · ${item.model} · ${new Date(item.createdAt).toLocaleString()}`
+      return `${header}\n--- ${meta} ---\n\nInput:\n${item.input}\n\nOutput:\n${item.output}\n`
+    })
+    .join('\n---\n\n')
 }

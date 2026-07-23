@@ -3,91 +3,63 @@
  */
 
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
-import { IpcChannel } from '@shared/IpcChannel'
 import type {
+  AiHelperApi,
+  AiResultEvent,
   AppErrorEvent,
-  SessionStateEvent,
-  TranscriptApi,
-  TranscriptResultEvent,
-  TranslationResultEvent,
+  ChatGptState,
+  SessionUpdatedEvent,
   UpdateStateEvent,
 } from '@shared/types'
 
-/** Subscribes to one approved event and returns a cleanup callback. */
-const subscribe = <T>(channel: IpcChannel, listener: (payload: T) => void): (() => void) => {
+/** Subscribes to an IPC channel event and returns an unsubscribe function. */
+const subscribe = <T>(channel: string, listener: (payload: T) => void): (() => void) => {
   const handler = (_event: IpcRendererEvent, payload: T): void => listener(payload)
   ipcRenderer.on(channel, handler)
   return () => ipcRenderer.removeListener(channel, handler)
 }
 
-const api: TranscriptApi = {
-  /** Loads settings, transcript history, credential status, and application metadata. */
-  bootstrap: () => ipcRenderer.invoke(IpcChannel.AppBootstrap),
-  /** Atomically merges validated application settings fields. */
-  saveSettings: (patch) => ipcRenderer.invoke(IpcChannel.SettingsSave, patch),
-  /** Validates, encrypts, and saves a Deepgram API key. */
-  saveApiKey: (apiKey) => ipcRenderer.invoke(IpcChannel.CredentialsSave, apiKey),
-  /** Retrieves the decrypted Deepgram API key only when requested by settings. */
-  getApiKey: () => ipcRenderer.invoke(IpcChannel.CredentialsGet),
-  /** Deletes the encrypted Deepgram API key. */
-  deleteApiKey: () => ipcRenderer.invoke(IpcChannel.CredentialsDelete),
-  /** Retrieves optional balance data for the encrypted Deepgram API key. */
-  getApiBalance: () => ipcRenderer.invoke(IpcChannel.CredentialsBalance),
-  /** Opens one Deepgram stream for every enabled audio source. */
-  startSession: (request) => ipcRenderer.invoke(IpcChannel.SessionStart, request),
-  /** Flushes and closes the active transcription session. */
-  stopSession: () => ipcRenderer.invoke(IpcChannel.SessionStop),
-  /** Sends one bounded source-specific PCM16 frame. */
-  sendAudio: (source, samples) =>
-    ipcRenderer.send(IpcChannel.AudioChunk, { source, samples: new Uint8Array(samples) }),
-  /** Creates one empty local transcript. */
-  createTranscript: (language) => ipcRenderer.invoke(IpcChannel.TranscriptCreate, language),
-  /** Loads one complete local transcript. */
-  getTranscript: (id) => ipcRenderer.invoke(IpcChannel.TranscriptGet, id),
-  /** Renames one local transcript. */
-  renameTranscript: (id, title) => ipcRenderer.invoke(IpcChannel.TranscriptRename, { id, title }),
-  /** Deletes one local transcript. */
-  deleteTranscript: (id) => ipcRenderer.invoke(IpcChannel.TranscriptDelete, id),
-  /** Changes the provider/target and schedules existing transcript text for translation. */
-  translateTranscript: (id, enabled, provider, targetLanguage) =>
-    ipcRenderer.invoke(IpcChannel.TranscriptTranslate, id, enabled, provider, targetLanguage),
-  /** Opens a native dialog and exports one transcript. */
-  exportTranscript: (id, format, dialogTitle, includeTranslation, provider, targetLanguage) =>
-    ipcRenderer.invoke(
-      IpcChannel.TranscriptExport,
-      id,
-      format,
-      dialogTitle,
-      includeTranslation,
-      provider,
-      targetLanguage,
-    ),
-  /** Changes the native always-on-top window state. */
-  setAlwaysOnTop: (enabled) => ipcRenderer.invoke(IpcChannel.WindowAlwaysOnTop, enabled),
-  /** Synchronizes native title-bar colors with the renderer theme. */
-  setTheme: (theme) => ipcRenderer.invoke(IpcChannel.ThemeSet, theme),
-  /** Opens one allow-listed HTTPS URL in the system browser. */
-  openExternal: (url) => ipcRenderer.invoke(IpcChannel.ShellOpenExternal, url),
-  /** Opens the AppData log directory in the operating-system file manager. */
-  openLogsDirectory: () => ipcRenderer.invoke(IpcChannel.LogsOpenDirectory),
-  /** Forwards one renderer diagnostic to the configured main logger. */
-  writeLog: (entry) => ipcRenderer.send(IpcChannel.LogWrite, entry),
-  /** Checks GitHub Releases for a newer application version. */
-  checkForUpdates: () => ipcRenderer.invoke(IpcChannel.UpdatesCheck),
-  /** Restarts and installs a downloaded update. */
-  installUpdate: () => ipcRenderer.invoke(IpcChannel.UpdatesInstall),
-  /** Subscribes to recording lifecycle events. */
-  onSessionState: (listener) => subscribe<SessionStateEvent>(IpcChannel.SessionState, listener),
-  /** Subscribes to interim and final transcript results. */
-  onTranscriptResult: (listener) =>
-    subscribe<TranscriptResultEvent>(IpcChannel.TranscriptResult, listener),
-  /** Subscribes to persisted sentence translations. */
-  onTranslationResult: (listener) =>
-    subscribe<TranslationResultEvent>(IpcChannel.TranslationResult, listener),
-  /** Subscribes to recoverable application errors. */
-  onError: (listener) => subscribe<AppErrorEvent>(IpcChannel.AppError, listener),
-  /** Subscribes to updater lifecycle progress. */
-  onUpdateState: (listener) => subscribe<UpdateStateEvent>(IpcChannel.UpdateState, listener),
+const api: AiHelperApi = {
+  /** Sends a screen selection result from the overlay window. */
+  sendSelection: (result) => ipcRenderer.send('screen-selection', result),
+  /** Requests the main process to open the fullscreen selection overlay. */
+  requestScreenSelection: (mode, repeat) => ipcRenderer.invoke('screen:select', mode, repeat),
+
+  /** Captures a screen region and returns it as a PNG data URL. */
+  captureScreen: (box) => ipcRenderer.invoke('screen:capture', box),
+
+  bootstrap: () => ipcRenderer.invoke('app:bootstrap'),
+  saveSettings: (patch) => ipcRenderer.invoke('settings:save', patch),
+  saveApiKey: (apiKey) => ipcRenderer.invoke('credentials:save', apiKey),
+  getApiKey: () => ipcRenderer.invoke('credentials:get'),
+  deleteApiKey: () => ipcRenderer.invoke('credentials:delete'),
+  signInChatGpt: () => ipcRenderer.invoke('chatgpt:sign-in'),
+  signOutChatGpt: () => ipcRenderer.invoke('chatgpt:sign-out'),
+  refreshChatGpt: () => ipcRenderer.invoke('chatgpt:refresh'),
+  scanText: (request) => ipcRenderer.invoke('ai:scan-text', request),
+  scanImage: (request) => ipcRenderer.invoke('ai:scan-image', request),
+  cancelScan: () => ipcRenderer.invoke('ai:cancel'),
+  listSessions: () => ipcRenderer.invoke('session:list'),
+  createSession: () => ipcRenderer.invoke('session:create'),
+  renameSession: (id, title) => ipcRenderer.invoke('session:rename', id, title),
+  getSession: (id) => ipcRenderer.invoke('session:get', id),
+  deleteSession: (id) => ipcRenderer.invoke('session:delete', id),
+  deleteAllSessions: () => ipcRenderer.invoke('session:delete-all'),
+  exportSession: (id, format) => ipcRenderer.invoke('session:export', id, format),
+  fetchModels: () => ipcRenderer.invoke('models:fetch'),
+  setAlwaysOnTop: (enabled) => ipcRenderer.invoke('window:always-on-top', enabled),
+  setTheme: (theme) => ipcRenderer.invoke('theme:set', theme),
+  openExternal: (url) => ipcRenderer.invoke('shell:open-external', url),
+  openLogsDirectory: () => ipcRenderer.invoke('logs:open-directory'),
+  writeLog: (entry) => ipcRenderer.send('logs:write', entry),
+  checkForUpdates: () => ipcRenderer.invoke('updates:check'),
+  installUpdate: () => ipcRenderer.invoke('updates:install'),
+  onAiResult: (listener) => subscribe<AiResultEvent>('event:ai-result', listener),
+  onSessionUpdated: (listener) => subscribe<SessionUpdatedEvent>('event:session-updated', listener),
+  onChatGptState: (listener) => subscribe<ChatGptState>('event:chatgpt-state', listener),
+  onError: (listener) => subscribe<AppErrorEvent>('event:error', listener),
+  onUpdateState: (listener) => subscribe<UpdateStateEvent>('event:update-state', listener),
+  onShortcut: (listener) => subscribe<string>('shortcut', listener),
 }
 
-contextBridge.exposeInMainWorld('transcript', api)
+contextBridge.exposeInMainWorld('aihelper', api)

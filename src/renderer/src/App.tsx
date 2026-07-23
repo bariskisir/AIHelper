@@ -1,5 +1,5 @@
-/**
- * Composes the reusable desktop shell, Transcript workspace, settings, and update notice.
+﻿/**
+ * Composes the reusable desktop shell, AIHelper workspace, settings, and update notice.
  */
 
 import { lazy, Suspense } from 'react'
@@ -17,7 +17,6 @@ import { useAppSelector } from '@renderer/store'
 
 const SettingsPage = lazy(() => import('@renderer/pages/settings/SettingsPage'))
 
-/** Renders application pages after main-process bootstrap completes. */
 const App = (): React.JSX.Element => {
   useAppInit()
   const initialized = useAppSelector((state) => state.app.initialized)
