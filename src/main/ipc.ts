@@ -14,6 +14,7 @@ import {
   type WebContents,
 } from 'electron'
 import { IpcChannel } from '@shared/IpcChannel'
+import { APP_AUTHOR_URL } from '@shared/appInfo'
 import {
   EXPORT_FORMATS,
   LOG_LEVELS,
@@ -54,7 +55,7 @@ const rendererLogSchema = z.object({
 
 const TRUSTED_EXTERNAL_ORIGINS = new Set([
   'https://github.com',
-  'https://www.bariskisir.com',
+  APP_AUTHOR_URL,
   'https://chatgpt.com',
   'https://auth.openai.com',
 ])

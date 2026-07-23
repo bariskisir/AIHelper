@@ -2,12 +2,13 @@
  * Renders the reusable settings shell and delegates each category to an isolated section.
  */
 
-import { Cpu, Info, RefreshCw, Settings2, Sliders } from 'lucide-react'
+import { Cpu, Info, RefreshCw, ScrollText, Settings2, Sliders } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@renderer/store'
 import { setSettingsSection, type SettingsSection } from '@renderer/store/appSlice'
 import AboutSettingsSection from './sections/AboutSettingsSection'
 import GeneralSettingsSection from './sections/GeneralSettingsSection'
+import LoggingSettingsSection from './sections/LoggingSettingsSection'
 import ProviderSettingsSection from './sections/ProviderSettingsSection'
 import SystemPromptsSettingsSection from './sections/SystemPromptsSettingsSection'
 import UpdatesSettingsSection from './sections/UpdatesSettingsSection'
@@ -27,6 +28,7 @@ const SettingsPage = (): React.JSX.Element => {
     { key: 'provider', label: t('settings.provider'), icon: <Cpu size={17} /> },
     { key: 'prompts', label: t('settings.prompts'), icon: <Sliders size={17} /> },
     { key: 'updates', label: t('settings.updates'), icon: <RefreshCw size={17} /> },
+    { key: 'logging', label: t('settings.logging'), icon: <ScrollText size={17} /> },
     { key: 'about', label: t('settings.about'), icon: <Info size={17} /> },
   ]
 
@@ -35,6 +37,7 @@ const SettingsPage = (): React.JSX.Element => {
     if (section === 'provider') return <ProviderSettingsSection />
     if (section === 'prompts') return <SystemPromptsSettingsSection />
     if (section === 'updates') return <UpdatesSettingsSection />
+    if (section === 'logging') return <LoggingSettingsSection />
     if (section === 'about') return <AboutSettingsSection />
     return <GeneralSettingsSection />
   }

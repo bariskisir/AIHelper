@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { Button, Dropdown, Empty, Input, Modal, Tooltip, type MenuProps } from 'antd'
 import { Download, FileDown, FileText, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useTheme } from '@renderer/context/ThemeProvider'
 import type { SessionSummary } from '@shared/types'
 import { useAppDispatch, useAppSelector } from '@renderer/store'
 import { setCurrentSession, setSessions } from '@renderer/store/appSlice'
@@ -20,6 +21,8 @@ const SessionsSidebar = (): React.JSX.Element => {
   const timeFormat = useAppSelector((state) => state.app.settings.timeFormat)
   const dispatch = useAppDispatch()
   const { t } = useTranslation()
+  const { theme } = useTheme()
+  const light = theme === 'light'
   const scanning = scanState === 'scanning'
   const [renameTarget, setRenameTarget] = useState<SessionSummary | null>(null)
   const [renameValue, setRenameValue] = useState('')
@@ -284,7 +287,10 @@ const SessionsSidebar = (): React.JSX.Element => {
         okText={t('common.rename')}
         cancelText={t('common.cancel')}
         confirmLoading={renaming}
-        okButtonProps={{ disabled: !renameValue.trim() }}
+        okButtonProps={{
+          disabled: !renameValue.trim(),
+          ...(light ? { ghost: true as const } : {}),
+        }}
         onOk={() => void commitRename()}
         onCancel={() => setRenameTarget(null)}
         destroyOnHidden

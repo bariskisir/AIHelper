@@ -4,8 +4,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button, Select, Tag } from 'antd'
-import { LogIn, LogOut, RefreshCw } from 'lucide-react'
+import { Link2, LogIn, LogOut, RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useTheme } from '@renderer/context/ThemeProvider'
 import { selectPreferredModelId } from '@shared/providers'
 import {
   SERVICE_TIERS,
@@ -27,6 +28,8 @@ const ProviderSettingsSection = (): React.JSX.Element => {
   const chatGpt = useAppSelector((state) => state.app.chatGpt)
   const { saveSettings } = useSettingsActions()
   const { t } = useTranslation()
+  const { theme } = useTheme()
+  const light = theme === 'light'
 
   const [refreshingChatGpt, setRefreshingChatGpt] = useState(false)
 
@@ -127,10 +130,19 @@ const ProviderSettingsSection = (): React.JSX.Element => {
             description={signedIn ? chatGpt.limitLabel || '' : t('settings.chatGptNotSignedIn')}
           />
           <div className={styles.settingControl}>
-            {signedIn && <Tag color="green">{t('settings.connected')}</Tag>}
+            {signedIn && (
+              <div className={styles.connectedTag}>
+                <Tag color="green" icon={<Link2 size={12} />}>
+                  {t('settings.connected')}
+                </Tag>
+              </div>
+            )}
             {signedIn ? (
               <>
                 <Button
+                  {...(!light
+                    ? { type: 'primary' as const }
+                    : { className: styles.refreshButton ?? '' })}
                   loading={refreshingChatGpt}
                   icon={<RefreshCw size={14} />}
                   onClick={() => void refreshChatGpt()}
@@ -138,7 +150,9 @@ const ProviderSettingsSection = (): React.JSX.Element => {
                   {t('settings.refresh')}
                 </Button>
                 <Button
-                  danger
+                  {...(light
+                    ? { danger: true as const }
+                    : { type: 'primary' as const, danger: true as const })}
                   icon={<LogOut size={14} />}
                   onClick={() =>
                     void window.aihelper.signOutChatGpt().then((s) => dispatch(setChatGptState(s)))
@@ -150,6 +164,7 @@ const ProviderSettingsSection = (): React.JSX.Element => {
             ) : (
               <Button
                 type="primary"
+                {...(light ? { ghost: true as const } : {})}
                 loading={chatGpt.status === 'signing-in'}
                 icon={<LogIn size={14} />}
                 onClick={() => void window.aihelper.signInChatGpt()}

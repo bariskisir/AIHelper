@@ -4,10 +4,11 @@
 
 import { useState } from 'react'
 import { Button, Input, Modal, Select } from 'antd'
-import { Plus, Trash2 } from 'lucide-react'
+import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { AppSettings, SystemPrompt } from '@shared/types'
 import { useSettingsActions } from '@renderer/hooks/useSettingsActions'
+import { useTheme } from '@renderer/context/ThemeProvider'
 import { useAppSelector } from '@renderer/store'
 import SettingLabel from '../components/SettingLabel'
 import styles from '../SettingsPage.module.scss'
@@ -18,6 +19,9 @@ const uid = () => Math.random().toString(36).slice(2, 10)
 /** Settings section for creating, editing, deleting, and selecting text and image system prompts. */
 const SystemPromptsSettingsSection = (): React.JSX.Element => {
   const { t } = useTranslation()
+  const { theme } = useTheme()
+  const light = theme === 'light'
+  const okButtonProps = light ? { ghost: true as const } : {}
   const settings = useAppSelector((state) => state.app.settings)
   const { saveSettings } = useSettingsActions()
   const [localSettings, setLocalSettings] = useState<AppSettings>(settings)
@@ -137,7 +141,7 @@ const SystemPromptsSettingsSection = (): React.JSX.Element => {
       <h1 className={styles.settingPageTitle}>{t('settings.prompts')}</h1>
 
       {/* Text System Prompts */}
-      <h2 className={styles.groupTitle}>{t('home.scanText')}</h2>
+      <h2 className={styles.groupTitle}>Text</h2>
       <section className={styles.settingGroup}>
         <div className={styles.settingRow}>
           <SettingLabel title={t('home.systemPrompt')} description="" />
@@ -159,7 +163,9 @@ const SystemPromptsSettingsSection = (): React.JSX.Element => {
             </Button>
             {currentTextPrompt && !currentTextPrompt.isBuiltIn && (
               <Button
+                className={styles.editButton ?? ''}
                 size="small"
+                icon={<Pencil size={14} />}
                 onClick={() => {
                   setEditingPrompt(currentTextPrompt)
                   setEpName(currentTextPrompt.name)
@@ -191,7 +197,7 @@ const SystemPromptsSettingsSection = (): React.JSX.Element => {
       </section>
 
       {/* Image System Prompts */}
-      <h2 className={styles.groupTitle}>{t('home.scanImage')}</h2>
+      <h2 className={styles.groupTitle}>      <h2 className={styles.groupTitle}>Image</h2></h2>
       <section className={styles.settingGroup}>
         <div className={styles.settingRow}>
           <SettingLabel title={t('home.systemPrompt')} description="" />
@@ -213,7 +219,9 @@ const SystemPromptsSettingsSection = (): React.JSX.Element => {
             </Button>
             {currentImagePrompt && !currentImagePrompt.isBuiltIn && (
               <Button
+                className={styles.editButton ?? ''}
                 size="small"
+                icon={<Pencil size={14} />}
                 onClick={() => {
                   setEditingPrompt(currentImagePrompt)
                   setEpName(currentImagePrompt.name)
@@ -250,6 +258,7 @@ const SystemPromptsSettingsSection = (): React.JSX.Element => {
         open={showAddTextPrompt}
         onOk={() => void addTextPrompt()}
         onCancel={() => setShowAddTextPrompt(false)}
+        okButtonProps={okButtonProps}
       >
         <Input
           placeholder="Name"
@@ -270,6 +279,7 @@ const SystemPromptsSettingsSection = (): React.JSX.Element => {
         open={showAddImagePrompt}
         onOk={() => void addImagePrompt()}
         onCancel={() => setShowAddImagePrompt(false)}
+        okButtonProps={okButtonProps}
       >
         <Input
           placeholder="Name"
@@ -290,6 +300,7 @@ const SystemPromptsSettingsSection = (): React.JSX.Element => {
         open={Boolean(editingPrompt)}
         onOk={() => void editPrompt()}
         onCancel={() => setEditingPrompt(null)}
+        okButtonProps={okButtonProps}
       >
         <Input
           placeholder="Name"

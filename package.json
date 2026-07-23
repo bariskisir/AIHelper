@@ -1,6 +1,6 @@
 {
   "name": "aihelper",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "AI-powered text and image analysis desktop application",
   "main": "./out/main/index.js",
   "author": "bariskisir",

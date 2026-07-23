@@ -131,6 +131,15 @@
   gap: 8px;
 }
 
+.connectedTag {
+  :global(.ant-tag) {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+  }
+}
+
 .providerModalBody {
   display: flex;
   flex-direction: column;
@@ -336,5 +345,25 @@
 
   .wideControl {
     width: 210px;
+  }
+}
+
+.editButton {
+  color: #b8860b;
+  border-color: #b8860b;
+
+  &:hover {
+    color: #d4a017 !important;
+    border-color: #d4a017 !important;
+  }
+}
+
+.refreshButton {
+  color: #16a34a;
+  border-color: #16a34a;
+
+  &:hover {
+    color: #22c55e !important;
+    border-color: #22c55e !important;
   }
 }

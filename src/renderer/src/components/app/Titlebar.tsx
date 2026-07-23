@@ -49,7 +49,7 @@ const Titlebar = (): React.JSX.Element => {
             >
               <Button
                 className={styles.titleButton ?? ''}
-                type={compactMode ? 'primary' : 'text'}
+                type="text"
                 icon={compactMode ? <PanelTopOpen size={18} /> : <PanelTopClose size={18} />}
                 onClick={() => dispatch(setCompactMode(!compactMode))}
               />
