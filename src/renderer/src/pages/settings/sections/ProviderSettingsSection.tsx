@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button, Select, Tag } from 'antd'
-import { Link2, LogIn, LogOut, RefreshCw } from 'lucide-react'
+import { CircleCheck, LogIn, LogOut, RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '@renderer/context/ThemeProvider'
 import { selectPreferredModelId } from '@shared/providers'
@@ -43,7 +43,7 @@ const ProviderSettingsSection = (): React.JSX.Element => {
   const refreshChatGpt = useCallback(async () => {
     setRefreshingChatGpt(true)
     try {
-      const state = await window.aihelper.refreshChatGpt()
+      const state = await window.app.refreshChatGpt()
       dispatch(setChatGptState(state))
       if (state.models && state.models.length > 0) {
         const preferredId = selectPreferredModelId(state.models)
@@ -131,8 +131,8 @@ const ProviderSettingsSection = (): React.JSX.Element => {
           />
           <div className={styles.settingControl}>
             {signedIn && (
-              <div className={styles.connectedTag}>
-                <Tag color="green" icon={<Link2 size={12} />}>
+              <div className={styles.statusTag}>
+                <Tag color="green" icon={<CircleCheck size={12} />}>
                   {t('settings.connected')}
                 </Tag>
               </div>
@@ -155,7 +155,7 @@ const ProviderSettingsSection = (): React.JSX.Element => {
                     : { type: 'primary' as const, danger: true as const })}
                   icon={<LogOut size={14} />}
                   onClick={() =>
-                    void window.aihelper.signOutChatGpt().then((s) => dispatch(setChatGptState(s)))
+                    void window.app.signOutChatGpt().then((s) => dispatch(setChatGptState(s)))
                   }
                 >
                   {t('settings.signOut')}
@@ -167,7 +167,7 @@ const ProviderSettingsSection = (): React.JSX.Element => {
                 {...(light ? { ghost: true as const } : {})}
                 loading={chatGpt.status === 'signing-in'}
                 icon={<LogIn size={14} />}
-                onClick={() => void window.aihelper.signInChatGpt()}
+                onClick={() => void window.app.signInChatGpt()}
               >
                 {t('settings.signIn')}
               </Button>

@@ -12,6 +12,7 @@ export enum IpcChannel {
   AiScanImage = 'ai:scan-image',
   AiCancel = 'ai:cancel',
   SessionList = 'session:list',
+  SessionGet = 'session:get',
   SessionCreate = 'session:create',
   SessionRename = 'session:rename',
   SessionDelete = 'session:delete',

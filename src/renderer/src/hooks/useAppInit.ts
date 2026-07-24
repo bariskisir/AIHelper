@@ -33,7 +33,7 @@ export const useAppInit = (): void => {
   useEffect(() => {
     let active = true
     const cleanups = [
-      window.aihelper.onAiResult((event) => {
+      window.app.onAiResult((event) => {
         if (event.inputText !== undefined) {
           dispatch(setPendingInputText(event.inputText))
         }
@@ -43,23 +43,23 @@ export const useAppInit = (): void => {
           dispatch(appendScanOutput(event.delta))
         }
       }),
-      window.aihelper.onSessionUpdated((event) => {
+      window.app.onSessionUpdated((event) => {
         dispatch(setSessions(event.sessions))
         if (event.currentSession) {
           dispatch(setCurrentSession(event.currentSession))
         }
       }),
-      window.aihelper.onChatGptState((state) => {
+      window.app.onChatGptState((state) => {
         dispatch(setChatGptState(state))
       }),
-      window.aihelper.onUpdateState((event) => dispatch(setUpdateState(event))),
-      window.aihelper.onError((event) => {
+      window.app.onUpdateState((event) => dispatch(setUpdateState(event))),
+      window.app.onError((event) => {
         logger.error('Main process reported an application error.', event.message)
         void messageRef.current.error(event.message, 8)
       }),
     ]
 
-    void window.aihelper
+    void window.app
       .bootstrap()
       .then(async (payload) => {
         if (!active) return

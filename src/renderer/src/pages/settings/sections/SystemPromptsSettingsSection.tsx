@@ -197,7 +197,7 @@ const SystemPromptsSettingsSection = (): React.JSX.Element => {
       </section>
 
       {/* Image System Prompts */}
-      <h2 className={styles.groupTitle}>      <h2 className={styles.groupTitle}>Image</h2></h2>
+      <h2 className={styles.groupTitle}>Image</h2>
       <section className={styles.settingGroup}>
         <div className={styles.settingRow}>
           <SettingLabel title={t('home.systemPrompt')} description="" />

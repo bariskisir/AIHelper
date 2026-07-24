@@ -626,7 +626,7 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
     send(IpcChannel.SessionUpdated, { sessions, currentSession: doc })
     return doc
   })
-  ipcMain.handle('session:get', async (event, id: unknown) => {
+  ipcMain.handle(IpcChannel.SessionGet, async (event, id: unknown) => {
     assertSender(event.sender)
     return services.storage.getSession(sessionIdSchema.parse(id))
   })

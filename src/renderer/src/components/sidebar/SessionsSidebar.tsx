@@ -42,7 +42,7 @@ const SessionsSidebar = (): React.JSX.Element => {
   /** Loads the full session document and sets it as the current session. */
   const openSession = async (id: string): Promise<void> => {
     try {
-      const doc = await window.aihelper.getSession(id)
+      const doc = await window.app.getSession(id)
       dispatch(setCurrentSession(doc))
     } catch {
       /* ignore */
@@ -51,7 +51,7 @@ const SessionsSidebar = (): React.JSX.Element => {
 
   /** Deletes a single session and opens the first remaining session. */
   const deleteSession = async (id: string): Promise<void> => {
-    const updatedSessions = await window.aihelper.deleteSession(id)
+    const updatedSessions = await window.app.deleteSession(id)
     dispatch(setSessions(updatedSessions))
     if (updatedSessions[0]) await openSession(updatedSessions[0].id)
   }
@@ -61,10 +61,10 @@ const SessionsSidebar = (): React.JSX.Element => {
     if (deletingAll) return
     setDeletingAll(true)
     try {
-      const updatedSessions = await window.aihelper.deleteAllSessions()
+      const updatedSessions = await window.app.deleteAllSessions()
       dispatch(setSessions(updatedSessions))
       if (updatedSessions[0]) {
-        const doc = await window.aihelper.getSession(updatedSessions[0].id)
+        const doc = await window.app.getSession(updatedSessions[0].id)
         dispatch(setCurrentSession(doc))
       }
     } catch {
@@ -78,8 +78,8 @@ const SessionsSidebar = (): React.JSX.Element => {
     if (!renameTarget || !renameValue.trim()) return
     setRenaming(true)
     try {
-      const doc = await window.aihelper.renameSession(renameTarget.id, renameValue.trim())
-      const updatedSessions = await window.aihelper.listSessions()
+      const doc = await window.app.renameSession(renameTarget.id, renameValue.trim())
+      const updatedSessions = await window.app.listSessions()
       dispatch(setSessions(updatedSessions))
       if (currentSession?.id === doc.id) {
         dispatch(setCurrentSession(doc))
@@ -94,7 +94,7 @@ const SessionsSidebar = (): React.JSX.Element => {
   /** Triggers a native save dialog to export one or all sessions in the requested format. */
   const exportSession = async (id: string | null, format: 'txt' | 'json'): Promise<void> => {
     try {
-      await window.aihelper.exportSession(id, format)
+      await window.app.exportSession(id, format)
     } catch {
       /* ignore */
     }
@@ -163,8 +163,8 @@ const SessionsSidebar = (): React.JSX.Element => {
   /** Creates a new empty session and immediately switches to it. */
   const createNewSession = async (): Promise<void> => {
     try {
-      const doc = await window.aihelper.createSession()
-      const list = await window.aihelper.listSessions()
+      const doc = await window.app.createSession()
+      const list = await window.app.listSessions()
       dispatch(setSessions(list))
       dispatch(setCurrentSession(doc))
     } catch {

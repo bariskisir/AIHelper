@@ -6,6 +6,6 @@ import type { AiHelperApi } from '@shared/types'
 
 declare global {
   interface Window {
-    aihelper: AiHelperApi
+    app: AiHelperApi
   }
 }

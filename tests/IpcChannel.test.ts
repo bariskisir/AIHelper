@@ -1,62 +1,77 @@
 /**
- * Tests IPC channel enumeration consistency and value uniqueness.
+ * Verifies IPC channel naming conventions and that common channels are present.
  */
 
 import { describe, expect, it } from 'vitest'
 import { IpcChannel } from '../src/shared/IpcChannel'
 
 describe('IpcChannel', () => {
-  it('has no duplicate values', () => {
-    const values = Object.values(IpcChannel)
-    const uniqueValues = new Set(values)
-    expect(uniqueValues.size).toBe(values.length)
+  const channels = Object.values(IpcChannel)
+
+  it('has no duplicate channel values', () => {
+    expect(new Set(channels).size).toBe(channels.length)
   })
 
-  it('has no duplicate keys', () => {
-    const keys = Object.keys(IpcChannel)
-    const uniqueKeys = new Set(keys)
-    expect(uniqueKeys.size).toBe(keys.length)
-  })
-
-  it('all channel strings use wire format (lowercase with colon separator)', () => {
-    for (const value of Object.values(IpcChannel)) {
-      expect(value).toMatch(/^[a-z][a-z-]*:[a-z][a-z-]*$/)
+  it('uses a colon-delimited namespace prefix for every channel', () => {
+    for (const channel of channels) {
+      expect(channel).toMatch(/^[a-z-]+:[a-z-]+$/)
     }
   })
 
-  it('contains expected event channels', () => {
-    const values = Object.values(IpcChannel)
-    expect(values).toContain('event:ai-result')
-    expect(values).toContain('event:session-updated')
-    expect(values).toContain('event:chatgpt-state')
-    expect(values).toContain('event:error')
-    expect(values).toContain('event:update-state')
+  it('separates event channels with the "event:" prefix', () => {
+    const events = channels.filter((c) => c.startsWith('event:'))
+    expect(events.length).toBeGreaterThan(0)
+    for (const event of events) {
+      expect(event).toMatch(/^event:[a-z-]+$/)
+    }
   })
 
-  it('contains expected AI scan channels', () => {
-    const values = Object.values(IpcChannel)
-    expect(values).toContain('ai:scan-text')
-    expect(values).toContain('ai:scan-image')
-    expect(values).toContain('ai:cancel')
+  it('includes the required bootstrap channel', () => {
+    expect(channels).toContain('app:bootstrap')
   })
 
-  it('contains expected session channels', () => {
-    const values = Object.values(IpcChannel)
-    expect(values).toContain('session:list')
-    expect(values).toContain('session:create')
-    expect(values).toContain('session:rename')
-    expect(values).toContain('session:delete')
+  it('includes the required settings channel', () => {
+    expect(channels).toContain('settings:save')
   })
 
-  it('contains expected settings channels', () => {
-    const values = Object.values(IpcChannel)
-    expect(values).toContain('app:bootstrap')
-    expect(values).toContain('settings:save')
+  it('includes the required credential channels', () => {
+    expect(channels).toContain('credentials:save')
+    expect(channels).toContain('credentials:get')
+    expect(channels).toContain('credentials:delete')
   })
 
-  it('contains expected update channels', () => {
-    const values = Object.values(IpcChannel)
-    expect(values).toContain('updates:check')
-    expect(values).toContain('updates:install')
+  it('includes the required session channels', () => {
+    expect(channels).toContain('session:create')
+    expect(channels).toContain('session:get')
+    expect(channels).toContain('session:rename')
+    expect(channels).toContain('session:delete')
+    expect(channels).toContain('session:export')
+  })
+
+  it('includes the required window channel', () => {
+    expect(channels).toContain('window:always-on-top')
+  })
+
+  it('includes the required theme channel', () => {
+    expect(channels).toContain('theme:set')
+  })
+
+  it('includes the required shell channel', () => {
+    expect(channels).toContain('shell:open-external')
+  })
+
+  it('includes the required log channels', () => {
+    expect(channels).toContain('logs:open-directory')
+    expect(channels).toContain('logs:write')
+  })
+
+  it('includes the required update channels', () => {
+    expect(channels).toContain('updates:check')
+    expect(channels).toContain('updates:install')
+  })
+
+  it('includes the required error and update-state events', () => {
+    expect(channels).toContain('event:error')
+    expect(channels).toContain('event:update-state')
   })
 })

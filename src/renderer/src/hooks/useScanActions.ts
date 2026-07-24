@@ -42,16 +42,16 @@ export const useScanActions = () => {
       dispatch(startScan({ mode }))
       dispatch(setPendingImage(null))
       try {
-        const dataUrl = await window.aihelper.requestScreenSelection(mode, repeat)
+        const dataUrl = await window.app.requestScreenSelection(mode, repeat)
         if (!dataUrl) {
           dispatch(completeScan())
           return
         }
         dispatch(setPendingImage(dataUrl))
         if (mode === 'text') {
-          await window.aihelper.scanText({ text: '', imageDataUrl: dataUrl, settings })
+          await window.app.scanText({ text: '', imageDataUrl: dataUrl, settings })
         } else {
-          await window.aihelper.scanImage({ imageDataUrl: dataUrl, settings })
+          await window.app.scanImage({ imageDataUrl: dataUrl, settings })
         }
       } catch (error) {
         logger.error(`${mode} scan failed.`, error)
@@ -69,7 +69,7 @@ export const useScanActions = () => {
       if (!ensureSignedIn()) return
       dispatch(startScan({ mode: 'text' }))
       try {
-        await window.aihelper.scanText({ text, settings })
+        await window.app.scanText({ text, settings })
       } catch (error) {
         logger.error('Text scan failed.', error)
         void message.error(t('errors.generic'))
@@ -86,7 +86,7 @@ export const useScanActions = () => {
       if (!ensureSignedIn()) return
       dispatch(startScan({ mode: 'image' }))
       try {
-        await window.aihelper.scanImage({ imageDataUrl, text, settings })
+        await window.app.scanImage({ imageDataUrl, text, settings })
       } catch (error) {
         logger.error('Image scan failed.', error)
         void message.error(t('errors.generic'))
@@ -100,7 +100,7 @@ export const useScanActions = () => {
   const cancelCurrentScan = useCallback(async (): Promise<void> => {
     if (scanState !== 'scanning') return
     try {
-      await window.aihelper.cancelScan()
+      await window.app.cancelScan()
     } catch {
       /* ignore */
     }

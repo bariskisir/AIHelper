@@ -20,7 +20,7 @@ export const formatDate = (isoDate: string, timeFormat: TimeFormat): string => {
   const date = new Date(isoDate)
   const day = date.getDate().toString().padStart(2, '0')
   const month = (date.getMonth() + 1).toString().padStart(2, '0')
-  const year = date.getFullYear()
+  const year = String(date.getFullYear()).slice(2)
   const minutes = date.getMinutes().toString().padStart(2, '0')
   const localHours = date.getHours()
 

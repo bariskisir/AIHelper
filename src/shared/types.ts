@@ -40,7 +40,6 @@ export interface AiModel {
   displayName: string
   description: string
   isDefault: boolean
-  supportsImages: boolean
   supportsThinking: boolean
   thinkingVariants: { value: string; description: string }[]
 }

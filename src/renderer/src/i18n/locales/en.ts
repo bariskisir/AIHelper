@@ -104,11 +104,6 @@ export default {
     refreshModels: 'Refresh models',
     modelFilter: 'Model filter (regex)',
     modelFilterDescription: 'Filter available models using a regular expression.',
-    showProviderPrefix: 'Show provider prefix',
-    showProviderPrefixDescription: 'Show the provider name before each model in dropdowns.',
-    supportsImages: 'Image support',
-    supportsImagesDescription:
-      "Enable to include this provider's models in the image scan model list.",
     customProvider: 'Custom provider',
     apiHost: 'API host',
     apiHostDescription: 'The base URL of your OpenAI-compatible API.',

@@ -50,7 +50,7 @@ const HomePage = (): React.JSX.Element => {
 
   // Keyboard shortcut listener
   useEffect(() => {
-    const cleanup = window.aihelper.onShortcut((shortcut) => {
+    const cleanup = window.app.onShortcut((shortcut) => {
       if (shortcut === 'scan-text') {
         void scanWithOverlay('text', false)
       } else if (shortcut === 'scan-image') {

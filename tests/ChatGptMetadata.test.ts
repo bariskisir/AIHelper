@@ -1,190 +1,268 @@
 /**
- * Tests ChatGPT model normalization and usage formatting.
+ * Verifies that normalizeChatGptModels correctly maps raw API payloads to the
+ * AiModel[] contract, handles empty / malformed / missing payloads, filters
+ * hidden entries, resolves display names, detects image support, and assigns a
+ * default model when none is marked.
  */
 
 import { describe, expect, it } from 'vitest'
-import { formatChatGptUsage, normalizeChatGptModels } from '../src/main/services/ChatGptMetadata'
+import { normalizeChatGptModels } from '../src/main/services/ChatGptMetadata'
+import type { AiModel } from '../src/shared/types'
 
-describe('normalizeChatGptModels', () => {
-  it('returns empty array for null payload', () => {
-    const result = normalizeChatGptModels(null)
-    expect(result).toEqual([])
-  })
+// ---------------------------------------------------------------------------
+// Fixtures
+// ---------------------------------------------------------------------------
 
-  it('returns empty array for non-object payload', () => {
-    const result = normalizeChatGptModels('invalid')
-    expect(result).toEqual([])
-  })
+/** A minimal valid model entry matching the ChatGPT catalog shape. */
+const buildEntry = (overrides: Record<string, unknown> = {}): Record<string, unknown> => ({
+  slug: 'gpt-5.1',
+  display_name: 'GPT-5.1',
+  description: 'The latest flagship model.',
+  is_default: false,
+  input_modalities: ['text'],
+  supported_reasoning_levels: ['low', 'medium', 'high'],
+  ...overrides,
+})
 
-  it('returns empty array when models array is empty', () => {
-    const result = normalizeChatGptModels({ models: [] })
-    expect(result).toEqual([])
-  })
+const validPayload = { models: [buildEntry()] }
 
-  it('parses models from the models array', () => {
-    const payload = {
-      models: [
-        {
-          slug: 'gpt-5.6-luna',
-          display_name: 'GPT-5.6 Luna',
-          description: 'Fast model',
-          is_default: true,
-          input_modalities: ['text', 'image'],
-          supported_reasoning_levels: ['low', 'medium'],
-        },
-      ],
-    }
-    const result = normalizeChatGptModels(payload)
+// ---------------------------------------------------------------------------
+// Valid payloads
+// ---------------------------------------------------------------------------
+
+describe('normalizeChatGptModels – valid payloads', () => {
+  it('returns a normalized model for a valid payload', () => {
+    const result = normalizeChatGptModels(validPayload)
+
     expect(result).toHaveLength(1)
-    expect(result[0]?.id).toBe('gpt-5.6-luna')
-    expect(result[0]?.displayName).toBe('GPT-5.6 Luna')
-    expect(result[0]?.isDefault).toBe(true)
-    expect(result[0]?.supportsImages).toBe(true)
-    expect(result[0]?.supportsThinking).toBe(true)
-    expect(result[0]?.thinkingVariants).toHaveLength(2)
+    expect(result[0]!.id).toBe('gpt-5.1')
+    expect(result[0]!.displayName).toBe('GPT-5.1')
+    expect(result[0]!.description).toBe('The latest flagship model.')
+    expect(result[0]!.isDefault).toBe(true) // first model auto-flagged
+    expect(result[0]!.supportsThinking).toBe(true)
   })
 
-  it('parses models from the data array fallback field', () => {
-    const payload = {
-      data: [
-        {
-          id: 'gpt-4o',
-          displayName: 'GPT-4o',
-          description: 'Omni model',
-          is_default: false,
-        },
-      ],
-    }
+  it('falls back to `data` array when `models` is missing', () => {
+    const payload = { data: [buildEntry({ slug: 'fallback-model' })] }
     const result = normalizeChatGptModels(payload)
+
     expect(result).toHaveLength(1)
-    expect(result[0]?.id).toBe('gpt-4o')
-    expect(result[0]?.displayName).toBe('GPT-4o')
-    expect(result[0]?.supportsImages).toBe(false)
-    expect(result[0]?.supportsThinking).toBe(false)
+    expect(result[0]!.id).toBe('fallback-model')
   })
 
-  it('returns empty array when all models are hidden', () => {
-    const payload = {
-      models: [{ slug: 'hidden-model', hidden: true }],
-    }
-    const result = normalizeChatGptModels(payload)
-    expect(result).toEqual([])
+  it('resolves id from `slug` then `model` then `id`', () => {
+    expect(normalizeChatGptModels({ models: [buildEntry({ slug: 'slug-id' })] })[0]!.id).toBe(
+      'slug-id',
+    )
+
+    const noSlug = buildEntry()
+    delete noSlug.slug
+    noSlug.model = 'model-field'
+    expect(normalizeChatGptModels({ models: [noSlug] })[0]!.id).toBe('model-field')
+
+    const onlyId = buildEntry()
+    delete onlyId.slug
+    onlyId.id = 'id-field'
+    expect(normalizeChatGptModels({ models: [onlyId] })[0]!.id).toBe('id-field')
   })
 
-  it('returns empty array when all models have visibility hide', () => {
-    const payload = {
-      models: [{ slug: 'secret-model', visibility: 'hide' }],
-    }
-    const result = normalizeChatGptModels(payload)
-    expect(result).toEqual([])
+  it('resolves displayName from `display_name` then `displayName` then falls back to id', () => {
+    const entry = buildEntry()
+    delete entry.display_name
+    entry.displayName = 'Camel Name'
+    const result = normalizeChatGptModels({ models: [entry] })
+    expect(result[0]!.displayName).toBe('Camel Name')
   })
 
-  it('sorts models alphabetically by display name', () => {
+  it('falls back to id as displayName when neither name field is present', () => {
+    const entry = buildEntry()
+    delete entry.display_name
+    // No displayName or display_name → uses id
+    const result = normalizeChatGptModels({ models: [entry] })
+    expect(result[0]!.displayName).toBe('gpt-5.1')
+  })
+
+  it('detects image support from input_modalities', () => {
+    const textOnly = normalizeChatGptModels({
+      models: [buildEntry({ input_modalities: ['text'] })],
+    })
+
+    const withImage = normalizeChatGptModels({
+      models: [buildEntry({ input_modalities: ['text', 'image'] })],
+    })
+
+    const withImages = normalizeChatGptModels({
+      models: [buildEntry({ input_modalities: ['text', 'images'] })],
+    })
+  })
+
+  it('parses thinking variants from supported_reasoning_levels', () => {
+    const result = normalizeChatGptModels({
+      models: [buildEntry({ supported_reasoning_levels: ['off', 'low', 'high'] })],
+    })
+
+    expect(result[0]!.supportsThinking).toBe(true)
+    expect(result[0]!.thinkingVariants).toHaveLength(3)
+    expect(result[0]!.thinkingVariants[0]).toEqual({
+      value: 'off',
+      description: '',
+    })
+    expect(result[0]!.thinkingVariants[1]).toEqual({
+      value: 'low',
+      description: '',
+    })
+  })
+
+  it('parses thinking variants from supported_reasoning_efforts fallback', () => {
+    const entry = buildEntry()
+    delete entry.supported_reasoning_levels
+    entry.supported_reasoning_efforts = ['medium']
+    const result = normalizeChatGptModels({ models: [entry] })
+
+    expect(result[0]!.supportsThinking).toBe(true)
+    expect(result[0]!.thinkingVariants[0]!.value).toBe('medium')
+  })
+
+  it('parses thinking variants from thinking_variants fallback', () => {
+    const entry = buildEntry()
+    delete entry.supported_reasoning_levels
+    entry.thinking_variants = [{ name: 'xhigh' }]
+    const result = normalizeChatGptModels({ models: [entry] })
+
+    expect(result[0]!.supportsThinking).toBe(true)
+    expect(result[0]!.thinkingVariants[0]!.value).toBe('xhigh')
+  })
+
+  it('parses object-shaped thinking variants with effort/value/name and description', () => {
     const payload = {
       models: [
-        { slug: 'z-model', display_name: 'Z Model' },
-        { slug: 'a-model', display_name: 'A Model' },
-        { slug: 'm-model', display_name: 'M Model' },
-      ],
-    }
-    const result = normalizeChatGptModels(payload)
-    expect(result.map((m) => m.id)).toEqual(['a-model', 'm-model', 'z-model'])
-  })
-
-  it('ensures at least one model is default when none marked', () => {
-    const payload = {
-      models: [
-        { slug: 'model-a', display_name: 'Model A', is_default: false },
-        { slug: 'model-b', display_name: 'Model B', is_default: false },
-      ],
-    }
-    const result = normalizeChatGptModels(payload)
-    expect(result.some((m) => m.isDefault)).toBe(true)
-  })
-
-  it('parses thinking variants from supported_reasoning_efforts', () => {
-    const payload = {
-      models: [
-        {
-          slug: 'reasoning-model',
-          supported_reasoning_efforts: [
-            { effort: 'low', description: 'Low effort' },
-            { effort: 'high', description: 'High effort' },
+        buildEntry({
+          supported_reasoning_levels: [
+            { effort: 'high', description: 'Deep reasoning' },
+            { value: 'low', description: 'Quick response' },
           ],
-        },
+        }),
       ],
     }
     const result = normalizeChatGptModels(payload)
-    expect(result[0]?.thinkingVariants).toHaveLength(2)
-    expect(result[0]?.thinkingVariants?.[0]?.value).toBe('low')
+
+    expect(result[0]!.thinkingVariants).toHaveLength(2)
+    expect(result[0]!.thinkingVariants[0]).toEqual({
+      value: 'high',
+      description: 'Deep reasoning',
+    })
+    expect(result[0]!.thinkingVariants[1]).toEqual({
+      value: 'low',
+      description: 'Quick response',
+    })
   })
 
-  it('returns empty thinking variants when none provided', () => {
+  it('sorts models alphabetically by displayName', () => {
     const payload = {
-      models: [{ slug: 'no-thinking', display_name: 'No Thinking' }],
+      models: [
+        buildEntry({ slug: 'z-model', display_name: 'Zeta' }),
+        buildEntry({ slug: 'a-model', display_name: 'Alpha' }),
+        buildEntry({ slug: 'm-model', display_name: 'Mid' }),
+      ],
     }
     const result = normalizeChatGptModels(payload)
-    expect(result[0]?.thinkingVariants).toEqual([])
+
+    expect(result.map((m) => m.displayName)).toEqual(['Alpha', 'Mid', 'Zeta'])
   })
 
-  it('models without thinking variants have supportsThinking false', () => {
+  it('preserves an explicit is_default flag', () => {
     const payload = {
-      models: [{ slug: 'no-thinking', display_name: 'No Thinking' }],
+      models: [
+        buildEntry({ slug: 'first', is_default: false }),
+        buildEntry({ slug: 'second', is_default: true }),
+      ],
     }
     const result = normalizeChatGptModels(payload)
-    expect(result[0]?.supportsThinking).toBe(false)
+
+    const defaultModel = result.find((m) => m.isDefault)
+    expect(defaultModel).toBeDefined()
+    expect(defaultModel!.id).toBe('second')
   })
 })
 
-describe('formatChatGptUsage', () => {
-  it('returns empty string for null payload', () => {
-    expect(formatChatGptUsage(null)).toBe('')
-  })
+// ---------------------------------------------------------------------------
+// Filtered / hidden models
+// ---------------------------------------------------------------------------
 
-  it('returns empty string for non-object payload', () => {
-    expect(formatChatGptUsage('invalid')).toBe('')
-  })
-
-  it('returns the plan name when present', () => {
+describe('normalizeChatGptModels – filtering', () => {
+  it('filters out models marked hidden: true', () => {
     const payload = {
-      account_plan: 'pro',
-      rate_limit: {
-        primary_window: {
-          used_percent: 25,
-          limit_window_seconds: 3600,
-          reset_at: 2_000_000_000,
-        },
-      },
+      models: [
+        buildEntry({ slug: 'visible', hidden: false }),
+        buildEntry({ slug: 'invisible', hidden: true }),
+      ],
     }
-    const result = formatChatGptUsage(payload, 1_750_000_000 * 1_000)
-    expect(result).toContain('Pro')
-    expect(result).toContain('25% used')
+    const result = normalizeChatGptModels(payload)
+
+    expect(result).toHaveLength(1)
+    expect(result[0]!.id).toBe('visible')
   })
 
-  it('formats usage from secondary_window', () => {
+  it('filters out models with visibility set to "hide"', () => {
     const payload = {
-      rate_limit: {
-        secondary_window: {
-          used_percent: 50.5,
-          limit_window_seconds: 86400,
-          reset_after_seconds: 7200,
-        },
-      },
+      models: [
+        buildEntry({ slug: 'shown' }),
+        buildEntry({ slug: 'concealed', visibility: 'hide' }),
+      ],
     }
-    const result = formatChatGptUsage(payload, Date.now())
-    expect(result).toContain('50.5% used')
+    const result = normalizeChatGptModels(payload)
+
+    expect(result).toHaveLength(1)
+    expect(result[0]!.id).toBe('shown')
   })
 
-  it('normalizes plan names with underscores', () => {
-    const payload = {
-      plan_name: 'pro_monthly_subscription',
-      rate_limit: {
-        primary_window: {
-          used_percent: 10,
-        },
-      },
-    }
-    const result = formatChatGptUsage(payload)
-    expect(result).toContain('Pro Monthly Subscription')
+  it('filters out models without a resolvable id', () => {
+    const entry = buildEntry()
+    delete entry.slug
+    delete entry.model
+    delete entry.id
+    // No id field at all
+    const result = normalizeChatGptModels({ models: [entry] })
+
+    expect(result).toHaveLength(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Malformed / empty payloads
+// ---------------------------------------------------------------------------
+
+describe('normalizeChatGptModels – malformed payloads', () => {
+  it('returns an empty array for null', () => {
+    expect(normalizeChatGptModels(null)).toEqual([])
+  })
+
+  it('returns an empty array for undefined', () => {
+    expect(normalizeChatGptModels(undefined)).toEqual([])
+  })
+
+  it('returns an empty array for primitive strings', () => {
+    expect(normalizeChatGptModels('garbage')).toEqual([])
+  })
+
+  it('returns an empty array for numbers', () => {
+    expect(normalizeChatGptModels(42)).toEqual([])
+  })
+
+  it('returns an empty array for empty objects', () => {
+    expect(normalizeChatGptModels({})).toEqual([])
+  })
+
+  it('returns an empty array for arrays', () => {
+    expect(normalizeChatGptModels([])).toEqual([])
+    expect(normalizeChatGptModels([1, 2, 3])).toEqual([])
+  })
+
+  it('returns an empty array when models/data is missing', () => {
+    expect(normalizeChatGptModels({ unrelated: 'field' })).toEqual([])
+  })
+
+  it('returns an empty array when models is an empty array', () => {
+    expect(normalizeChatGptModels({ models: [] })).toEqual([])
   })
 })

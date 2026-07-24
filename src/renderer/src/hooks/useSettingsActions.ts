@@ -25,7 +25,7 @@ export const useSettingsActions = () => {
   const saveSettings = useCallback(
     async (patch: AppSettingsPatch): Promise<void> => {
       try {
-        const saved = await settingsPersistenceQueue.enqueue(patch, window.aihelper.saveSettings)
+        const saved = await settingsPersistenceQueue.enqueue(patch, window.app.saveSettings)
         dispatch(setSettings(saved))
         document.documentElement.lang = saved.uiLanguage
         await i18n.changeLanguage(saved.uiLanguage)
@@ -41,7 +41,7 @@ export const useSettingsActions = () => {
   const saveApiKey = useCallback(
     async (apiKey: string): Promise<boolean> => {
       try {
-        await window.aihelper.saveApiKey(apiKey)
+        await window.app.saveApiKey(apiKey)
         void message.success(t('notices.apiKeySaved'))
         return true
       } catch (error) {
@@ -56,7 +56,7 @@ export const useSettingsActions = () => {
   /** Removes the encrypted API key. */
   const deleteApiKey = useCallback(async (): Promise<boolean> => {
     try {
-      await window.aihelper.deleteApiKey()
+      await window.app.deleteApiKey()
       void message.success(t('notices.apiKeyRemoved'))
       return true
     } catch (error) {

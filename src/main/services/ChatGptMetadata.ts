@@ -47,16 +47,12 @@ export const normalizeChatGptModels = (payload: unknown): AiModel[] => {
         stringValue(option.effort) || stringValue(option.value) || stringValue(option.name)
       return value ? [{ value, description: stringValue(option.description) }] : []
     })
-    const inputModalities = Array.isArray(model.input_modalities)
-      ? model.input_modalities.map((m) => stringValue(m))
-      : []
     return [
       {
         id,
         displayName: stringValue(model.display_name) || stringValue(model.displayName) || id,
         description: stringValue(model.description),
         isDefault: model.is_default === true,
-        supportsImages: inputModalities.includes('image') || inputModalities.includes('images'),
         supportsThinking: thinkingVariants.length > 0,
         thinkingVariants,
       },
