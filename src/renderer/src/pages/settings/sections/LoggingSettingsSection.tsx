@@ -2,13 +2,13 @@
  * Renders log level and log folder controls.
  */
 
-import { Button, Select } from 'antd'
-import { FolderOpen } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
-import { LOG_LEVELS } from '@shared/types'
 import { useDesktopActions } from '@renderer/hooks/useDesktopActions'
 import { useSettingsActions } from '@renderer/hooks/useSettingsActions'
 import { useAppSelector } from '@renderer/store'
+import { LOG_LEVELS } from '@shared/types'
+import { Button, Select } from 'antd'
+import { FolderOpen } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import SettingLabel from '../components/SettingLabel'
 import styles from '../SettingsPage.module.scss'
 

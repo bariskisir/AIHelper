@@ -5,8 +5,8 @@
  * and listSessions sort order.
  */
 
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import type { SessionDocument, SessionItem, SessionSummary } from '../src/shared/types'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { SessionDocument, SessionItem } from '../src/shared/types'
 
 // ---------------------------------------------------------------------------
 // In-memory filesystem shared by all fs/promises mocks
@@ -21,14 +21,20 @@ vi.mock('node:fs/promises', () => ({
   readFile: vi.fn(async (filePath: string) => {
     const content = fileStore.get(filePath)
     if (content === undefined) {
-      const err = Object.assign(new Error(`ENOENT: ${filePath}`), { code: 'ENOENT' })
+      const err = Object.assign(new Error(`ENOENT: ${filePath}`), {
+        code: 'ENOENT',
+      })
       throw err
     }
     return content
   }),
   readdir: vi.fn(async (dirPath: string) => {
     const prefix = toPosix(dirPath).replace(/\/?$/, '/')
-    const entries: Array<{ name: string; isFile: () => boolean; isDirectory: () => boolean }> = []
+    const entries: Array<{
+      name: string
+      isFile: () => boolean
+      isDirectory: () => boolean
+    }> = []
     for (const [rawKey] of fileStore) {
       const key = toPosix(rawKey)
       if (key.startsWith(prefix)) {
@@ -59,8 +65,7 @@ vi.mock('node:crypto', () => ({
   }),
 }))
 
-import { mkdir, readFile, readdir, unlink, writeFile } from 'node:fs/promises'
-import { randomUUID } from 'node:crypto'
+import { readdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import StorageService from '../src/main/services/StorageService'
 
@@ -130,7 +135,7 @@ describe('StorageService', () => {
       const raw = fileStore.get(sessionPath(doc.id))
       expect(raw).toBeDefined()
 
-      const parsed: SessionDocument = JSON.parse(raw!)
+      const parsed: SessionDocument = JSON.parse(raw ?? '')
       expect(parsed.id).toBe(doc.id)
       expect(parsed.title).toBe('New Session')
     })
@@ -172,10 +177,10 @@ describe('StorageService', () => {
       const updated = await svc.setSessionItem(created.id, item)
 
       expect(updated.item).toBeDefined()
-      expect(updated.item!.id).toBe(item.id)
-      expect(updated.item!.input).toBe('Hello world')
-      expect(updated.item!.output).toBe('Hello there')
-      expect(updated.item!.scanMode).toBe('text')
+      expect(updated.item?.id).toBe(item.id)
+      expect(updated.item?.input).toBe('Hello world')
+      expect(updated.item?.output).toBe('Hello there')
+      expect(updated.item?.scanMode).toBe('text')
     })
 
     it('bumps updatedAt when setting an item', async () => {
@@ -239,7 +244,7 @@ describe('StorageService', () => {
       const list = await svc.deleteSession(first.id)
 
       expect(list).toHaveLength(1)
-      expect(list[0]!.id).toBe(second.id)
+      expect(list[0]?.id).toBe(second.id)
     })
 
     it('creates a fresh empty session when the last session is deleted', async () => {
@@ -249,8 +254,8 @@ describe('StorageService', () => {
       const list = await svc.deleteSession(only.id)
 
       expect(list).toHaveLength(1)
-      expect(list[0]!.id).not.toBe(only.id)
-      expect(list[0]!.title).toBe('New Session')
+      expect(list[0]?.id).not.toBe(only.id)
+      expect(list[0]?.title).toBe('New Session')
     })
 
     it('does not throw when deleting a non-existent session', async () => {
@@ -274,8 +279,8 @@ describe('StorageService', () => {
       const list = await svc.deleteAllSessions()
 
       expect(list).toHaveLength(1)
-      expect(list[0]!.title).toBe('New Session')
-      expect(list[0]!.isDefaultTitle).toBe(true)
+      expect(list[0]?.title).toBe('New Session')
+      expect(list[0]?.isDefaultTitle).toBe(true)
     })
   })
 
@@ -285,7 +290,7 @@ describe('StorageService', () => {
     it('returns an empty array when no sessions exist', async () => {
       const svc = newService()
       // Don't create any session — ensure the directory is empty
-      vi.mocked(readdir).mockResolvedValueOnce([] as any)
+      vi.mocked(readdir).mockResolvedValueOnce([] as unknown as Awaited<ReturnType<typeof readdir>>)
 
       const list = await svc.listSessions()
       expect(list).toEqual([])
@@ -313,8 +318,8 @@ describe('StorageService', () => {
       const summary = list.find((s) => s.id === created.id)
 
       expect(summary).toBeDefined()
-      expect(summary!.hasItem).toBe(true)
-      expect(summary!.preview).toContain('Solve this math problem')
+      expect(summary?.hasItem).toBe(true)
+      expect(summary?.preview).toContain('Solve this math problem')
     })
 
     it('returns the title as preview when no item exists', async () => {
@@ -326,9 +331,9 @@ describe('StorageService', () => {
       const summary = list.find((s) => s.id === created.id)
 
       expect(summary).toBeDefined()
-      expect(summary!.hasItem).toBe(false)
+      expect(summary?.hasItem).toBe(false)
       // preview falls back to title when there is no item.input
-      expect(summary!.preview).toBe('Physics Homework')
+      expect(summary?.preview).toBe('Physics Homework')
     })
   })
 })

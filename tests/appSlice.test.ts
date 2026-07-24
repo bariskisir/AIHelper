@@ -8,27 +8,26 @@
 
 import { describe, expect, it } from 'vitest'
 import reducer, {
+  appendScanOutput,
+  cancelScan,
+  completeScan,
   hydrate,
-  setPage,
-  setSettingsSection,
-  setSettings,
   setChatGptState,
-  setSessions,
+  setCompactMode,
   setCurrentSession,
+  setPage,
   setPendingImage,
   setPendingInputText,
-  startScan,
-  appendScanOutput,
-  completeScan,
-  cancelScan,
-  setUpdateState,
+  setSessions,
   setSessionsSidebarOpen,
-  setCompactMode,
-  type AppState,
+  setSettings,
+  setSettingsSection,
+  setUpdateState,
+  startScan,
 } from '../src/renderer/src/store/appSlice'
 import {
-  DEFAULT_SETTINGS,
   type AppSettings,
+  DEFAULT_SETTINGS,
   type SessionDocument,
   type SessionSummary,
 } from '../src/shared/types'
@@ -158,7 +157,9 @@ describe('appSlice – hydrate', () => {
           models: [],
         },
         sessions: [],
-        currentSession: sessionDoc({ id: 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb' }),
+        currentSession: sessionDoc({
+          id: 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb',
+        }),
       }),
     )
     expect(preloaded.initialized).toBe(true)
@@ -178,7 +179,9 @@ describe('appSlice – hydrate', () => {
           models: [],
         },
         sessions: [],
-        currentSession: sessionDoc({ id: 'cccccccc-cccc-4ccc-cccc-cccccccccccc' }),
+        currentSession: sessionDoc({
+          id: 'cccccccc-cccc-4ccc-cccc-cccccccccccc',
+        }),
       }),
     )
 
@@ -219,7 +222,11 @@ describe('appSlice – navigation', () => {
 
 describe('appSlice – setSettings', () => {
   it('replaces the entire settings object', () => {
-    const newSettings: AppSettings = { ...DEFAULT_SETTINGS, theme: 'light', compactMode: true }
+    const newSettings: AppSettings = {
+      ...DEFAULT_SETTINGS,
+      theme: 'light',
+      compactMode: true,
+    }
 
     const state = reducer(undefined, setSettings(newSettings))
 
@@ -260,7 +267,7 @@ describe('appSlice – setChatGptState', () => {
     expect(state.chatGpt.accountEmail).toBe('user@example.com')
     expect(state.chatGpt.limitLabel).toBe('80% used')
     expect(state.chatGpt.models).toHaveLength(1)
-    expect(state.chatGpt.models[0]!.id).toBe('gpt-5.1')
+    expect(state.chatGpt.models[0]?.id).toBe('gpt-5.1')
   })
 })
 
@@ -278,7 +285,7 @@ describe('appSlice – sessions', () => {
     const state = reducer(undefined, setSessions(summaries))
 
     expect(state.sessions).toHaveLength(2)
-    expect(state.sessions[0]!.title).toBe('One')
+    expect(state.sessions[0]?.title).toBe('One')
   })
 
   it('setCurrentSession sets the active session and clears scan output', () => {

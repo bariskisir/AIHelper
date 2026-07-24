@@ -3,28 +3,27 @@
  */
 
 import { writeFile } from 'node:fs/promises'
+import { APP_AUTHOR_URL } from '@shared/appInfo'
+import { IpcChannel } from '@shared/IpcChannel'
+import type { AppSettingsPatch } from '@shared/types'
+import {
+  type BootstrapPayload,
+  EXPORT_FORMATS,
+  LOG_LEVELS,
+  type UpdateStateEvent,
+} from '@shared/types'
 import {
   app,
   BrowserWindow,
   desktopCapturer,
   dialog,
-  ipcMain,
   screen as electronScreen,
+  ipcMain,
   shell,
   type WebContents,
 } from 'electron'
-import { IpcChannel } from '@shared/IpcChannel'
-import { APP_AUTHOR_URL } from '@shared/appInfo'
-import {
-  EXPORT_FORMATS,
-  LOG_LEVELS,
-  type BootstrapPayload,
-  type UpdateStateEvent,
-} from '@shared/types'
-import { z } from 'zod'
 import { createWorker } from 'tesseract.js'
-import { settingsPatchSchema, settingsSchema } from './settingsSchema'
-import type { AppSettingsPatch } from '@shared/types'
+import { z } from 'zod'
 import type AiProviderService from './services/AiProviderService'
 import type AppUpdater from './services/AppUpdater'
 import type ChatGptService from './services/ChatGptService'
@@ -32,6 +31,7 @@ import type CredentialService from './services/CredentialService'
 import { renderSessions } from './services/ExportService'
 import type LoggerService from './services/LoggerService'
 import type StorageService from './services/StorageService'
+import { settingsPatchSchema, settingsSchema } from './settingsSchema'
 
 const scanTextSchema = z.object({
   text: z.string().trim().max(200_000).optional().default(''),
@@ -156,7 +156,12 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
   // Screen capture
   ipcMain.handle('screen:capture', async (event, box: unknown) => {
     assertSender(event.sender)
-    const b = box as { left: number; top: number; width: number; height: number } | null
+    const b = box as {
+      left: number
+      top: number
+      width: number
+      height: number
+    } | null
     if (!b || typeof b.left !== 'number' || typeof b.width !== 'number')
       throw new Error('Invalid capture box.')
     const sources = await desktopCapturer.getSources({
@@ -312,7 +317,11 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
           movable: false,
           focusable: true,
           acceptFirstMouse: true,
-          webPreferences: { sandbox: false, nodeIntegration: true, contextIsolation: false },
+          webPreferences: {
+            sandbox: false,
+            nodeIntegration: true,
+            contextIsolation: false,
+          },
         })
 
         overlayWins.push(overlayWin)
@@ -452,7 +461,9 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
         const ocrText = ret.data.text.trim()
         if (ocrText) finalText = ocrText
       } catch (err) {
-        services.logger.error('IPC', 'OCR recognition failed.', { error: String(err) })
+        services.logger.error('IPC', 'OCR recognition failed.', {
+          error: String(err),
+        })
       }
     }
 
@@ -499,13 +510,23 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
         undefined,
         {
           onDelta: (d) =>
-            send(IpcChannel.AiResult, { sessionId, itemId: item.id, delta: d, isComplete: false }),
+            send(IpcChannel.AiResult, {
+              sessionId,
+              itemId: item.id,
+              delta: d,
+              isComplete: false,
+            }),
           signal: ac.signal,
         },
       )
       item.output = output
       const updated = await services.storage.setSessionItem(sessionId, item)
-      send(IpcChannel.AiResult, { sessionId, itemId: item.id, delta: '', isComplete: true })
+      send(IpcChannel.AiResult, {
+        sessionId,
+        itemId: item.id,
+        delta: '',
+        isComplete: true,
+      })
       send(IpcChannel.SessionUpdated, {
         sessions: await services.storage.listSessions(),
         currentSession: updated,
@@ -579,13 +600,23 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
         imageDataUrl,
         {
           onDelta: (d) =>
-            send(IpcChannel.AiResult, { sessionId, itemId: item.id, delta: d, isComplete: false }),
+            send(IpcChannel.AiResult, {
+              sessionId,
+              itemId: item.id,
+              delta: d,
+              isComplete: false,
+            }),
           signal: ac.signal,
         },
       )
       item.output = output
       const updated = await services.storage.setSessionItem(sessionId, item)
-      send(IpcChannel.AiResult, { sessionId, itemId: item.id, delta: '', isComplete: true })
+      send(IpcChannel.AiResult, {
+        sessionId,
+        itemId: item.id,
+        delta: '',
+        isComplete: true,
+      })
       send(IpcChannel.SessionUpdated, {
         sessions: await services.storage.listSessions(),
         currentSession: updated,

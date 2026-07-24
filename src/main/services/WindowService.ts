@@ -27,7 +27,11 @@ export default class WindowService {
       backgroundColor: '#181818',
       title: 'AI Helper',
       titleBarStyle: 'hidden',
-      titleBarOverlay: { color: '#1f1f1f', symbolColor: '#ffffff99', height: 42 },
+      titleBarOverlay: {
+        color: '#1f1f1f',
+        symbolColor: '#ffffff99',
+        height: 42,
+      },
       webPreferences: {
         preload: join(__dirname, '../preload/index.js'),
         contextIsolation: true,
@@ -63,7 +67,10 @@ export default class WindowService {
       },
     )
     window.webContents.on('preload-error', (_event, preloadPath, error) => {
-      logger.error('WindowService', 'Renderer preload failed.', { preloadPath, error })
+      logger.error('WindowService', 'Renderer preload failed.', {
+        preloadPath,
+        error,
+      })
     })
     window.webContents.on('render-process-gone', (_event, details) => {
       logger.error('WindowService', 'Renderer process exited unexpectedly.', details)

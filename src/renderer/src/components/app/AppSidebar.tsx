@@ -2,13 +2,13 @@
  * Renders the persistent AIHelper sidebar with global window controls.
  */
 
-import { Button, Tooltip } from 'antd'
-import { Monitor, Moon, Pin, Settings, Sun } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
-import type { AppSettingsPatch, ThemeMode } from '@shared/types'
 import { useTheme } from '@renderer/context/ThemeProvider'
 import { useAppDispatch, useAppSelector } from '@renderer/store'
 import { setPage } from '@renderer/store/appSlice'
+import type { AppSettingsPatch, ThemeMode } from '@shared/types'
+import { Button, Tooltip } from 'antd'
+import { Monitor, Moon, Pin, Settings, Sun } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import styles from './AppSidebar.module.scss'
 
 interface AppSidebarProps {
@@ -47,7 +47,10 @@ const AppSidebar = ({ onSettingsChange }: AppSidebarProps): React.JSX.Element =>
           <Button
             className={styles.sidebarButton ?? ''}
             {...(settings.alwaysOnTop
-              ? { type: 'primary' as const, ...(light ? { ghost: true as const } : {}) }
+              ? {
+                  type: 'primary' as const,
+                  ...(light ? { ghost: true as const } : {}),
+                }
               : { type: 'text' as const })}
             icon={<Pin size={18} />}
             onClick={() => void update({ alwaysOnTop: !settings.alwaysOnTop })}
@@ -65,7 +68,10 @@ const AppSidebar = ({ onSettingsChange }: AppSidebarProps): React.JSX.Element =>
           <Button
             className={styles.sidebarButton ?? ''}
             {...(page === 'settings'
-              ? { type: 'primary' as const, ...(light ? { ghost: true as const } : {}) }
+              ? {
+                  type: 'primary' as const,
+                  ...(light ? { ghost: true as const } : {}),
+                }
               : { type: 'text' as const })}
             icon={<Settings size={18} />}
             onClick={() => dispatch(setPage('settings'))}

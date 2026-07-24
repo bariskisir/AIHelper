@@ -2,9 +2,9 @@
  * Initializes renderer localization and exposes all supported interface resources.
  */
 
+import { APP_LOCALES, type AppLocale } from '@shared/types'
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
-import { APP_LOCALES, type AppLocale } from '@shared/types'
 import de from './locales/de'
 import en from './locales/en'
 import es from './locales/es'

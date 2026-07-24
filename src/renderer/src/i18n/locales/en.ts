@@ -77,7 +77,13 @@ export default {
     thinkingLevel: 'Thinking level',
     thinkingLevelDescription:
       'Higher reasoning levels provide deeper analysis but are slower and cost more.',
-    thinkingLevels: { off: 'Off', low: 'Low', medium: 'Medium', high: 'High', xhigh: 'Maximum' },
+    thinkingLevels: {
+      off: 'Off',
+      low: 'Low',
+      medium: 'Medium',
+      high: 'High',
+      xhigh: 'Maximum',
+    },
     verbosity: 'Verbosity',
     verbosityDescription: 'Control the length and detail of responses.',
     verbosities: { low: 'Concise', medium: 'Balanced', high: 'Detailed' },
@@ -119,7 +125,10 @@ export default {
     session: 'Session',
     weekly: 'Weekly',
   },
-  notices: { apiKeySaved: 'API key saved securely.', apiKeyRemoved: 'API key removed.' },
+  notices: {
+    apiKeySaved: 'API key saved securely.',
+    apiKeyRemoved: 'API key removed.',
+  },
   errors: {
     generic: 'Something went wrong. Please try again.',
     chatGptRequired: 'Please sign in to ChatGPT in Settings to start scanning.',

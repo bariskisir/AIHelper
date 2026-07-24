@@ -2,17 +2,17 @@
  * Renders the reusable settings shell and delegates each category to an isolated section.
  */
 
+import { useAppDispatch, useAppSelector } from '@renderer/store'
+import { type SettingsSection, setSettingsSection } from '@renderer/store/appSlice'
 import { Cpu, Info, RefreshCw, ScrollText, Settings2, Sliders } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useAppDispatch, useAppSelector } from '@renderer/store'
-import { setSettingsSection, type SettingsSection } from '@renderer/store/appSlice'
+import styles from './SettingsPage.module.scss'
 import AboutSettingsSection from './sections/AboutSettingsSection'
 import GeneralSettingsSection from './sections/GeneralSettingsSection'
 import LoggingSettingsSection from './sections/LoggingSettingsSection'
 import ProviderSettingsSection from './sections/ProviderSettingsSection'
 import SystemPromptsSettingsSection from './sections/SystemPromptsSettingsSection'
 import UpdatesSettingsSection from './sections/UpdatesSettingsSection'
-import styles from './SettingsPage.module.scss'
 
 /** Renders category navigation and the selected settings section. */
 const SettingsPage = (): React.JSX.Element => {
@@ -24,11 +24,27 @@ const SettingsPage = (): React.JSX.Element => {
     label: string
     icon: React.JSX.Element
   }> = [
-    { key: 'general', label: t('settings.general'), icon: <Settings2 size={17} /> },
+    {
+      key: 'general',
+      label: t('settings.general'),
+      icon: <Settings2 size={17} />,
+    },
     { key: 'provider', label: t('settings.provider'), icon: <Cpu size={17} /> },
-    { key: 'prompts', label: t('settings.prompts'), icon: <Sliders size={17} /> },
-    { key: 'updates', label: t('settings.updates'), icon: <RefreshCw size={17} /> },
-    { key: 'logging', label: t('settings.logging'), icon: <ScrollText size={17} /> },
+    {
+      key: 'prompts',
+      label: t('settings.prompts'),
+      icon: <Sliders size={17} />,
+    },
+    {
+      key: 'updates',
+      label: t('settings.updates'),
+      icon: <RefreshCw size={17} />,
+    },
+    {
+      key: 'logging',
+      label: t('settings.logging'),
+      icon: <ScrollText size={17} />,
+    },
     { key: 'about', label: t('settings.about'), icon: <Info size={17} /> },
   ]
 

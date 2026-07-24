@@ -3,18 +3,18 @@
  */
 
 import { randomUUID } from 'node:crypto'
-import { mkdir, readFile, readdir, unlink, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import {
   AI_PROVIDERS,
-  SCAN_MODES,
-  THINKING_LEVELS,
-  VERBOSITY_LEVELS,
   type AppSettings,
   type AppSettingsPatch,
+  SCAN_MODES,
   type SessionDocument,
   type SessionItem,
   type SessionSummary,
+  THINKING_LEVELS,
+  VERBOSITY_LEVELS,
 } from '@shared/types'
 import { z } from 'zod'
 import { parsePersistedSettings, settingsSchema } from '../settingsSchema'

@@ -2,7 +2,6 @@
  * Exposes a typed, capability-limited IPC API to the sandboxed renderer.
  */
 
-import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import { IpcChannel } from '@shared/IpcChannel'
 import type {
   AiHelperApi,
@@ -12,6 +11,7 @@ import type {
   SessionUpdatedEvent,
   UpdateStateEvent,
 } from '@shared/types'
+import { contextBridge, type IpcRendererEvent, ipcRenderer } from 'electron'
 
 /** Subscribes to one approved event and returns a cleanup callback. */
 const subscribe = <T>(channel: string, listener: (payload: T) => void): (() => void) => {

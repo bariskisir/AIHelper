@@ -2,11 +2,11 @@
  * Resolves system/user theme preferences and synchronizes CSS and native window chrome.
  */
 
-import type { PropsWithChildren } from 'react'
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import type { ThemeMode } from '@shared/types'
 import { createLogger } from '@renderer/services/LoggerService'
 import { useAppSelector } from '@renderer/store'
+import type { ThemeMode } from '@shared/types'
+import type { PropsWithChildren } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
 type ResolvedTheme = Exclude<ThemeMode, 'system'>
 

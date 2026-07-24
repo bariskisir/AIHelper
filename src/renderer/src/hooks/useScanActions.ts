@@ -2,9 +2,6 @@
  * Provides scan text and scan image commands with streaming output management and auth enforcement.
  */
 
-import { useCallback } from 'react'
-import { App as AntdApp } from 'antd'
-import { useTranslation } from 'react-i18next'
 import { createLogger } from '@renderer/services/LoggerService'
 import { useAppDispatch, useAppSelector } from '@renderer/store'
 import {
@@ -14,6 +11,9 @@ import {
   setSettingsSection,
   startScan,
 } from '@renderer/store/appSlice'
+import { App as AntdApp } from 'antd'
+import { useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 
 const logger = createLogger('ScanActions')
 
@@ -49,7 +49,11 @@ export const useScanActions = () => {
         }
         dispatch(setPendingImage(dataUrl))
         if (mode === 'text') {
-          await window.app.scanText({ text: '', imageDataUrl: dataUrl, settings })
+          await window.app.scanText({
+            text: '',
+            imageDataUrl: dataUrl,
+            settings,
+          })
         } else {
           await window.app.scanImage({ imageDataUrl: dataUrl, settings })
         }

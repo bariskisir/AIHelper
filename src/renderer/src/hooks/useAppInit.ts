@@ -2,21 +2,21 @@
  * Bootstraps renderer state and binds all main-to-renderer lifecycle events.
  */
 
-import { useEffect, useRef } from 'react'
-import { App as AntdApp } from 'antd'
 import i18n from '@renderer/i18n'
 import { createLogger } from '@renderer/services/LoggerService'
+import { useAppDispatch } from '@renderer/store'
 import {
+  appendScanOutput,
+  completeScan,
   hydrate,
   setChatGptState,
   setCurrentSession,
+  setPendingInputText,
   setSessions,
   setUpdateState,
-  appendScanOutput,
-  completeScan,
-  setPendingInputText,
 } from '@renderer/store/appSlice'
-import { useAppDispatch } from '@renderer/store'
+import { App as AntdApp } from 'antd'
+import { useEffect, useRef } from 'react'
 
 const logger = createLogger('AppInit')
 

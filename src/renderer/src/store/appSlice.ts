@@ -4,10 +4,10 @@
 
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import {
-  DEFAULT_SETTINGS,
   type AppSettings,
   type BootstrapPayload,
   type ChatGptState,
+  DEFAULT_SETTINGS,
   type SessionDocument,
   type SessionSummary,
   type UpdateStateEvent,

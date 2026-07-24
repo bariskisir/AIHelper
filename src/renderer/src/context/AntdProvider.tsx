@@ -2,8 +2,9 @@
  * Applies Ant Design component tokens and locale data.
  */
 
-import type { PropsWithChildren } from 'react'
-import { ConfigProvider, theme as antdTheme } from 'antd'
+import { useAppSelector } from '@renderer/store'
+import type { AppLocale } from '@shared/types'
+import { theme as antdTheme, ConfigProvider } from 'antd'
 import deDE from 'antd/locale/de_DE'
 import enUS from 'antd/locale/en_US'
 import esES from 'antd/locale/es_ES'
@@ -14,8 +15,7 @@ import ptPT from 'antd/locale/pt_PT'
 import ruRU from 'antd/locale/ru_RU'
 import trTR from 'antd/locale/tr_TR'
 import zhCN from 'antd/locale/zh_CN'
-import type { AppLocale } from '@shared/types'
-import { useAppSelector } from '@renderer/store'
+import type { PropsWithChildren } from 'react'
 import { useTheme } from './ThemeProvider'
 
 /** Resolves an Ant Design locale from the application locale. */

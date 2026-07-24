@@ -2,11 +2,11 @@
  * Renders interface, clock, and AppData logging preferences.
  */
 
-import { Select } from 'antd'
-import { useTranslation } from 'react-i18next'
-import { APP_LOCALES, TIME_FORMATS, type AppLocale, type TimeFormat } from '@shared/types'
 import { useSettingsActions } from '@renderer/hooks/useSettingsActions'
 import { useAppSelector } from '@renderer/store'
+import { APP_LOCALES, type AppLocale, TIME_FORMATS, type TimeFormat } from '@shared/types'
+import { Select } from 'antd'
+import { useTranslation } from 'react-i18next'
 import SettingLabel from '../components/SettingLabel'
 import styles from '../SettingsPage.module.scss'
 

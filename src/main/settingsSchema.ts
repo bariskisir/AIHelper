@@ -4,6 +4,7 @@
 
 import {
   APP_LOCALES,
+  type AppSettings,
   DEFAULT_SETTINGS,
   LOG_LEVELS,
   SERVICE_TIERS,
@@ -11,7 +12,6 @@ import {
   THINKING_LEVELS,
   TIME_FORMATS,
   VERBOSITY_LEVELS,
-  type AppSettings,
 } from '@shared/types'
 import { z } from 'zod'
 
@@ -67,7 +67,11 @@ export const parsePersistedSettings = (input: unknown): AppSettings => {
   const data = asRecord(input)
   if (!data) return structuredClone(DEFAULT_SETTINGS)
 
-  const candidate = { ...DEFAULT_SETTINGS, ...data, settingsRevision: 1 as const }
+  const candidate = {
+    ...DEFAULT_SETTINGS,
+    ...data,
+    settingsRevision: 1 as const,
+  }
   const parsed = settingsSchema.safeParse(candidate)
   if (parsed.success) return parsed.data
 

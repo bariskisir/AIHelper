@@ -4,9 +4,9 @@
 
 import { mkdir, readdir, unlink } from 'node:fs/promises'
 import { join } from 'node:path'
+import type { LogLevel, RendererLogEntry } from '@shared/types'
 import { app } from 'electron'
 import electronLog from 'electron-log/main'
-import type { LogLevel, RendererLogEntry } from '@shared/types'
 
 const MAX_LOG_SIZE_BYTES = 10 * 1024 * 1024
 const GENERAL_RETENTION_DAYS = 30
@@ -134,7 +134,9 @@ export default class LoggerService {
   private async pruneExpiredLogs(): Promise<void> {
     try {
       await mkdir(this.logsDirectory, { recursive: true })
-      const entries = await readdir(this.logsDirectory, { withFileTypes: true })
+      const entries = await readdir(this.logsDirectory, {
+        withFileTypes: true,
+      })
       const now = Date.now()
       await Promise.all(
         entries.map(async (entry) => {

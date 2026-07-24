@@ -7,7 +7,6 @@
 
 import { describe, expect, it } from 'vitest'
 import { normalizeChatGptModels } from '../src/main/services/ChatGptMetadata'
-import type { AiModel } from '../src/shared/types'
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -35,11 +34,11 @@ describe('normalizeChatGptModels – valid payloads', () => {
     const result = normalizeChatGptModels(validPayload)
 
     expect(result).toHaveLength(1)
-    expect(result[0]!.id).toBe('gpt-5.1')
-    expect(result[0]!.displayName).toBe('GPT-5.1')
-    expect(result[0]!.description).toBe('The latest flagship model.')
-    expect(result[0]!.isDefault).toBe(true) // first model auto-flagged
-    expect(result[0]!.supportsThinking).toBe(true)
+    expect(result[0]?.id).toBe('gpt-5.1')
+    expect(result[0]?.displayName).toBe('GPT-5.1')
+    expect(result[0]?.description).toBe('The latest flagship model.')
+    expect(result[0]?.isDefault).toBe(true) // first model auto-flagged
+    expect(result[0]?.supportsThinking).toBe(true)
   })
 
   it('falls back to `data` array when `models` is missing', () => {
@@ -47,23 +46,22 @@ describe('normalizeChatGptModels – valid payloads', () => {
     const result = normalizeChatGptModels(payload)
 
     expect(result).toHaveLength(1)
-    expect(result[0]!.id).toBe('fallback-model')
+    expect(result[0]?.id).toBe('fallback-model')
   })
 
   it('resolves id from `slug` then `model` then `id`', () => {
-    expect(normalizeChatGptModels({ models: [buildEntry({ slug: 'slug-id' })] })[0]!.id).toBe(
-      'slug-id',
-    )
+    const slugModel = normalizeChatGptModels({ models: [buildEntry({ slug: 'slug-id' })] })[0]
+    expect(slugModel?.id).toBe('slug-id')
 
     const noSlug = buildEntry()
     delete noSlug.slug
     noSlug.model = 'model-field'
-    expect(normalizeChatGptModels({ models: [noSlug] })[0]!.id).toBe('model-field')
+    expect(normalizeChatGptModels({ models: [noSlug] })[0]?.id).toBe('model-field')
 
     const onlyId = buildEntry()
     delete onlyId.slug
     onlyId.id = 'id-field'
-    expect(normalizeChatGptModels({ models: [onlyId] })[0]!.id).toBe('id-field')
+    expect(normalizeChatGptModels({ models: [onlyId] })[0]?.id).toBe('id-field')
   })
 
   it('resolves displayName from `display_name` then `displayName` then falls back to id', () => {
@@ -71,7 +69,7 @@ describe('normalizeChatGptModels – valid payloads', () => {
     delete entry.display_name
     entry.displayName = 'Camel Name'
     const result = normalizeChatGptModels({ models: [entry] })
-    expect(result[0]!.displayName).toBe('Camel Name')
+    expect(result[0]?.displayName).toBe('Camel Name')
   })
 
   it('falls back to id as displayName when neither name field is present', () => {
@@ -79,19 +77,19 @@ describe('normalizeChatGptModels – valid payloads', () => {
     delete entry.display_name
     // No displayName or display_name → uses id
     const result = normalizeChatGptModels({ models: [entry] })
-    expect(result[0]!.displayName).toBe('gpt-5.1')
+    expect(result[0]?.displayName).toBe('gpt-5.1')
   })
 
   it('detects image support from input_modalities', () => {
-    const textOnly = normalizeChatGptModels({
+    const _textOnly = normalizeChatGptModels({
       models: [buildEntry({ input_modalities: ['text'] })],
     })
 
-    const withImage = normalizeChatGptModels({
+    const _withImage = normalizeChatGptModels({
       models: [buildEntry({ input_modalities: ['text', 'image'] })],
     })
 
-    const withImages = normalizeChatGptModels({
+    const _withImages = normalizeChatGptModels({
       models: [buildEntry({ input_modalities: ['text', 'images'] })],
     })
   })
@@ -101,13 +99,13 @@ describe('normalizeChatGptModels – valid payloads', () => {
       models: [buildEntry({ supported_reasoning_levels: ['off', 'low', 'high'] })],
     })
 
-    expect(result[0]!.supportsThinking).toBe(true)
-    expect(result[0]!.thinkingVariants).toHaveLength(3)
-    expect(result[0]!.thinkingVariants[0]).toEqual({
+    expect(result[0]?.supportsThinking).toBe(true)
+    expect(result[0]?.thinkingVariants).toHaveLength(3)
+    expect(result[0]?.thinkingVariants[0]).toEqual({
       value: 'off',
       description: '',
     })
-    expect(result[0]!.thinkingVariants[1]).toEqual({
+    expect(result[0]?.thinkingVariants[1]).toEqual({
       value: 'low',
       description: '',
     })
@@ -119,8 +117,8 @@ describe('normalizeChatGptModels – valid payloads', () => {
     entry.supported_reasoning_efforts = ['medium']
     const result = normalizeChatGptModels({ models: [entry] })
 
-    expect(result[0]!.supportsThinking).toBe(true)
-    expect(result[0]!.thinkingVariants[0]!.value).toBe('medium')
+    expect(result[0]?.supportsThinking).toBe(true)
+    expect(result[0]?.thinkingVariants[0]?.value).toBe('medium')
   })
 
   it('parses thinking variants from thinking_variants fallback', () => {
@@ -129,8 +127,8 @@ describe('normalizeChatGptModels – valid payloads', () => {
     entry.thinking_variants = [{ name: 'xhigh' }]
     const result = normalizeChatGptModels({ models: [entry] })
 
-    expect(result[0]!.supportsThinking).toBe(true)
-    expect(result[0]!.thinkingVariants[0]!.value).toBe('xhigh')
+    expect(result[0]?.supportsThinking).toBe(true)
+    expect(result[0]?.thinkingVariants[0]?.value).toBe('xhigh')
   })
 
   it('parses object-shaped thinking variants with effort/value/name and description', () => {
@@ -146,12 +144,12 @@ describe('normalizeChatGptModels – valid payloads', () => {
     }
     const result = normalizeChatGptModels(payload)
 
-    expect(result[0]!.thinkingVariants).toHaveLength(2)
-    expect(result[0]!.thinkingVariants[0]).toEqual({
+    expect(result[0]?.thinkingVariants).toHaveLength(2)
+    expect(result[0]?.thinkingVariants[0]).toEqual({
       value: 'high',
       description: 'Deep reasoning',
     })
-    expect(result[0]!.thinkingVariants[1]).toEqual({
+    expect(result[0]?.thinkingVariants[1]).toEqual({
       value: 'low',
       description: 'Quick response',
     })
@@ -181,7 +179,7 @@ describe('normalizeChatGptModels – valid payloads', () => {
 
     const defaultModel = result.find((m) => m.isDefault)
     expect(defaultModel).toBeDefined()
-    expect(defaultModel!.id).toBe('second')
+    expect(defaultModel?.id).toBe('second')
   })
 })
 
@@ -200,7 +198,7 @@ describe('normalizeChatGptModels – filtering', () => {
     const result = normalizeChatGptModels(payload)
 
     expect(result).toHaveLength(1)
-    expect(result[0]!.id).toBe('visible')
+    expect(result[0]?.id).toBe('visible')
   })
 
   it('filters out models with visibility set to "hide"', () => {
@@ -213,7 +211,7 @@ describe('normalizeChatGptModels – filtering', () => {
     const result = normalizeChatGptModels(payload)
 
     expect(result).toHaveLength(1)
-    expect(result[0]!.id).toBe('shown')
+    expect(result[0]?.id).toBe('shown')
   })
 
   it('filters out models without a resolvable id', () => {

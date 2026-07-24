@@ -11,8 +11,7 @@ export const selectPreferredModelId = (models: AiModel[]): string => {
   )
   for (const keyword of ['mini', 'terra', 'sol']) {
     const match = sorted.find(
-      (m) =>
-        m.id.toLowerCase().includes(keyword) || m.displayName.toLowerCase().includes(keyword),
+      (m) => m.id.toLowerCase().includes(keyword) || m.displayName.toLowerCase().includes(keyword),
     )
     if (match) return match.id
   }

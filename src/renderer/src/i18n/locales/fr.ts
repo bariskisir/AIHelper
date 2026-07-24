@@ -48,7 +48,10 @@ export default {
     exportAll: 'Tout exporter',
   },
   controls: { compactView: 'Vue compacte', fullView: 'Vue complète' },
-  sidebar: { showSidebar: 'Afficher le panneau', hideSidebar: 'Masquer le panneau' },
+  sidebar: {
+    showSidebar: 'Afficher le panneau',
+    hideSidebar: 'Masquer le panneau',
+  },
   settings: {
     title: 'Paramètres',
     general: 'Général',
@@ -146,7 +149,11 @@ export default {
     downloading: 'Téléchargement de la mise à jour... {{percent}}%',
     releaseNotes: 'Notes de version',
   },
-  themes: { system: 'Thème système', light: 'Thème clair', dark: 'Thème sombre' },
+  themes: {
+    system: 'Thème système',
+    light: 'Thème clair',
+    dark: 'Thème sombre',
+  },
   locales: {
     en: 'Anglais',
     tr: 'Turc',

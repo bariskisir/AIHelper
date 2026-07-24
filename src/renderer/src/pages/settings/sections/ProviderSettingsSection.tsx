@@ -2,23 +2,23 @@
  * Renders ChatGPT account and model configuration.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Button, Select, Tag } from 'antd'
-import { CircleCheck, LogIn, LogOut, RefreshCw } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
 import { useTheme } from '@renderer/context/ThemeProvider'
+import { useSettingsActions } from '@renderer/hooks/useSettingsActions'
+import { useAppDispatch, useAppSelector } from '@renderer/store'
+import { setChatGptState } from '@renderer/store/appSlice'
 import { selectPreferredModelId } from '@shared/providers'
 import {
   SERVICE_TIERS,
-  THINKING_LEVELS,
-  VERBOSITY_LEVELS,
   type ServiceTier,
+  THINKING_LEVELS,
   type ThinkingLevel,
+  VERBOSITY_LEVELS,
   type VerbosityLevel,
 } from '@shared/types'
-import { useAppDispatch, useAppSelector } from '@renderer/store'
-import { setChatGptState } from '@renderer/store/appSlice'
-import { useSettingsActions } from '@renderer/hooks/useSettingsActions'
+import { Button, Select } from 'antd'
+import { LogIn, LogOut, RefreshCw } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import SettingLabel from '../components/SettingLabel'
 import styles from '../SettingsPage.module.scss'
 
@@ -82,12 +82,14 @@ const ProviderSettingsSection = (): React.JSX.Element => {
       /* ignore */
     }
     setRefreshingChatGpt(false)
-  }, [dispatch, save])
+  }, [dispatch, save, settings.chatGptThinkingLevel])
 
   const signedIn = chatGpt.status === 'signed-in'
 
   useEffect(() => {
-    const configuredModelAvailable = chatGpt.models.some((model) => model.id === settings.chatGptModel)
+    const configuredModelAvailable = chatGpt.models.some(
+      (model) => model.id === settings.chatGptModel,
+    )
     if (signedIn && chatGpt.models.length > 0 && !configuredModelAvailable) {
       const preferredId = selectPreferredModelId(chatGpt.models)
       if (!preferredId) return
@@ -95,7 +97,8 @@ const ProviderSettingsSection = (): React.JSX.Element => {
       void save({
         chatGptModel: preferredId,
         chatGptThinkingLevel:
-          preferredModel?.thinkingVariants[0]?.value ?? settings.chatGptThinkingLevel,
+          (preferredModel?.thinkingVariants[0]?.value as ThinkingLevel | undefined) ??
+          settings.chatGptThinkingLevel,
       })
     }
   }, [signedIn, chatGpt.models, settings, save])
@@ -238,7 +241,13 @@ const ProviderSettingsSection = (): React.JSX.Element => {
                       }}
                     />
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--color-text-3)', marginTop: 2 }}>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: 'var(--color-text-3)',
+                      marginTop: 2,
+                    }}
+                  >
                     <span>
                       {w.percent}% {t('usage.used')}
                     </span>

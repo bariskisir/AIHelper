@@ -2,12 +2,12 @@
  * Renders the draggable desktop title bar with logo, sidebar toggle, and compact mode.
  */
 
+import { useAppDispatch, useAppSelector } from '@renderer/store'
+import { setCompactMode, setPage, setSessionsSidebarOpen } from '@renderer/store/appSlice'
 import { Button, Tooltip } from 'antd'
 import { PanelLeftClose, PanelRightClose, PanelTopClose, PanelTopOpen } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import logoUrl from '../../../../../build/icon.svg'
-import { useAppDispatch, useAppSelector } from '@renderer/store'
-import { setCompactMode, setPage, setSessionsSidebarOpen } from '@renderer/store/appSlice'
 import styles from './Titlebar.module.scss'
 
 /** Places primary navigation, sidebar, and compact-mode controls at the top-left. */

@@ -3,7 +3,10 @@
  */
 
 export default {
-  app: { name: 'AI Helper', tagline: 'Анализ текста и изображений с помощью ИИ' },
+  app: {
+    name: 'AI Helper',
+    tagline: 'Анализ текста и изображений с помощью ИИ',
+  },
   common: {
     save: 'Сохранить',
     cancel: 'Отмена',
@@ -145,7 +148,11 @@ export default {
     downloading: 'Загрузка обновления... {{percent}}%',
     releaseNotes: 'Примечания к выпуску',
   },
-  themes: { system: 'Системная тема', light: 'Светлая тема', dark: 'Тёмная тема' },
+  themes: {
+    system: 'Системная тема',
+    light: 'Светлая тема',
+    dark: 'Тёмная тема',
+  },
   locales: {
     en: 'Английский',
     tr: 'Турецкий',

@@ -47,7 +47,10 @@ export default {
     deleteAll: 'Excluir tudo',
     exportAll: 'Exportar tudo',
   },
-  controls: { compactView: 'Visualização compacta', fullView: 'Visualização completa' },
+  controls: {
+    compactView: 'Visualização compacta',
+    fullView: 'Visualização completa',
+  },
   sidebar: { showSidebar: 'Mostrar painel', hideSidebar: 'Ocultar painel' },
   settings: {
     title: 'Configurações',
@@ -146,7 +149,11 @@ export default {
     downloading: 'Baixando atualização... {{percent}}%',
     releaseNotes: 'Notas de versão',
   },
-  themes: { system: 'Tema do sistema', light: 'Tema claro', dark: 'Tema escuro' },
+  themes: {
+    system: 'Tema do sistema',
+    light: 'Tema claro',
+    dark: 'Tema escuro',
+  },
   locales: {
     en: 'Inglês',
     tr: 'Turco',
@@ -165,7 +172,10 @@ export default {
     session: 'Sessão',
     weekly: 'Semanal',
   },
-  notices: { apiKeySaved: 'Chave API salva com segurança.', apiKeyRemoved: 'Chave API removida.' },
+  notices: {
+    apiKeySaved: 'Chave API salva com segurança.',
+    apiKeyRemoved: 'Chave API removida.',
+  },
   errors: {
     generic: 'Algo deu errado. Tente novamente.',
     runtimeDetails: 'Erro do aplicativo: {{details}}',

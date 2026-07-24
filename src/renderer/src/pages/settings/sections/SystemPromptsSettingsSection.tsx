@@ -2,14 +2,14 @@
  * Renders the System Prompts management page for text and image scan prompts.
  */
 
-import { useState } from 'react'
+import { useTheme } from '@renderer/context/ThemeProvider'
+import { useSettingsActions } from '@renderer/hooks/useSettingsActions'
+import { useAppSelector } from '@renderer/store'
+import type { AppSettings, SystemPrompt } from '@shared/types'
 import { Button, Input, Modal, Select } from 'antd'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { AppSettings, SystemPrompt } from '@shared/types'
-import { useSettingsActions } from '@renderer/hooks/useSettingsActions'
-import { useTheme } from '@renderer/context/ThemeProvider'
-import { useAppSelector } from '@renderer/store'
 import SettingLabel from '../components/SettingLabel'
 import styles from '../SettingsPage.module.scss'
 
@@ -205,7 +205,10 @@ const SystemPromptsSettingsSection = (): React.JSX.Element => {
             <Select
               className={styles.promptSelect || ''}
               value={localSettings.imageSystemPromptPreset}
-              options={imagePrompts.map((p) => ({ value: p.id, label: p.name }))}
+              options={imagePrompts.map((p) => ({
+                value: p.id,
+                label: p.name,
+              }))}
               onChange={(v) => {
                 void save({ imageSystemPromptPreset: v })
               }}

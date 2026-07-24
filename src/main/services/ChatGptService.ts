@@ -4,8 +4,8 @@
 
 import { createHash, randomBytes } from 'node:crypto'
 import { createServer } from 'node:http'
-import { shell } from 'electron'
 import type { ChatGptState, ServiceTier, ThinkingLevel, VerbosityLevel } from '@shared/types'
+import { shell } from 'electron'
 import {
   formatChatGptUsage,
   normalizeChatGptModels,
@@ -367,7 +367,10 @@ export default class ChatGptService {
       originator: CHATGPT_ORIGINATOR,
       ...(accountId ? { 'chatgpt-account-id': accountId } : {}),
       ...(json
-        ? { 'Content-Type': 'application/json', 'OpenAI-Beta': 'responses=experimental' }
+        ? {
+            'Content-Type': 'application/json',
+            'OpenAI-Beta': 'responses=experimental',
+          }
         : {}),
     }
   }

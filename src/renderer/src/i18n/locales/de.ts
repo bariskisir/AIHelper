@@ -52,7 +52,10 @@ export default {
     exportAll: 'Alle exportieren',
   },
   controls: { compactView: 'Kompaktansicht', fullView: 'Vollansicht' },
-  sidebar: { showSidebar: 'Seitenleiste anzeigen', hideSidebar: 'Seitenleiste ausblenden' },
+  sidebar: {
+    showSidebar: 'Seitenleiste anzeigen',
+    hideSidebar: 'Seitenleiste ausblenden',
+  },
   settings: {
     title: 'Einstellungen',
     general: 'Allgemein',
@@ -150,7 +153,11 @@ export default {
     downloading: 'Update wird heruntergeladen... {{percent}}%',
     releaseNotes: 'Versionshinweise',
   },
-  themes: { system: 'Systemthema', light: 'Helles Thema', dark: 'Dunkles Thema' },
+  themes: {
+    system: 'Systemthema',
+    light: 'Helles Thema',
+    dark: 'Dunkles Thema',
+  },
   locales: {
     en: 'Englisch',
     tr: 'Türkisch',

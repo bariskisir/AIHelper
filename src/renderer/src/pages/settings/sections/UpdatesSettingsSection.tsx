@@ -2,14 +2,14 @@
  * Renders automatic update preferences and GitHub Releases progress.
  */
 
+import { useTheme } from '@renderer/context/ThemeProvider'
+import { useDesktopActions } from '@renderer/hooks/useDesktopActions'
+import { useSettingsActions } from '@renderer/hooks/useSettingsActions'
+import { useAppSelector } from '@renderer/store'
+import type { UpdateStateEvent } from '@shared/types'
 import { Button, Progress, Switch } from 'antd'
 import { RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import type { UpdateStateEvent } from '@shared/types'
-import { useDesktopActions } from '@renderer/hooks/useDesktopActions'
-import { useSettingsActions } from '@renderer/hooks/useSettingsActions'
-import { useTheme } from '@renderer/context/ThemeProvider'
-import { useAppSelector } from '@renderer/store'
 import SettingLabel from '../components/SettingLabel'
 import styles from '../SettingsPage.module.scss'
 

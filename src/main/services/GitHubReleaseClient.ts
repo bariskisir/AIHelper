@@ -5,8 +5,8 @@
 import { createHash } from 'node:crypto'
 import { mkdir, open, unlink } from 'node:fs/promises'
 import { basename, join } from 'node:path'
-import { z } from 'zod'
 import { APP_REPO } from '@shared/appInfo'
+import { z } from 'zod'
 
 const RELEASES_API_URL = `https://api.github.com/repos/${APP_REPO}/releases/latest`
 const GITHUB_ORIGIN = 'https://github.com'
@@ -109,7 +109,10 @@ export default class GitHubReleaseClient {
     if (!this.latestReleaseRequest) this.latestReleaseRequest = this.fetchLatestRelease()
     try {
       const release = await this.latestReleaseRequest
-      this.cachedRelease = { release, expiresAt: Date.now() + RELEASE_CACHE_DURATION_MS }
+      this.cachedRelease = {
+        release,
+        expiresAt: Date.now() + RELEASE_CACHE_DURATION_MS,
+      }
       return release
     } finally {
       this.latestReleaseRequest = null

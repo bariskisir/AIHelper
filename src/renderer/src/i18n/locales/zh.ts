@@ -94,7 +94,13 @@ export default {
     modelDescription: '选择用于扫描的 AI 模型。',
     thinkingLevel: '思考深度',
     thinkingLevelDescription: '控制推理深度（越高越深入但速度较慢）。',
-    thinkingLevels: { off: '关闭', low: '低', medium: '中', high: '高', xhigh: '极高' },
+    thinkingLevels: {
+      off: '关闭',
+      low: '低',
+      medium: '中',
+      high: '高',
+      xhigh: '极高',
+    },
     verbosity: '回答详细度',
     verbosityDescription: '控制 AI 答案的长度。',
     verbosities: { low: '简明', medium: '平衡', high: '详细' },
@@ -157,7 +163,10 @@ export default {
     session: '会话',
     weekly: '每周',
   },
-  notices: { apiKeySaved: 'API 密钥已安全保存。', apiKeyRemoved: 'API 密钥已移除。' },
+  notices: {
+    apiKeySaved: 'API 密钥已安全保存。',
+    apiKeyRemoved: 'API 密钥已移除。',
+  },
   errors: {
     generic: '发生错误，请重试。',
     runtimeDetails: '应用错误：{{details}}',

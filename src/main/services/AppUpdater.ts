@@ -4,12 +4,12 @@
 
 import { spawn } from 'node:child_process'
 import { join } from 'node:path'
-import { app } from 'electron'
 import type { UpdateStateEvent } from '@shared/types'
+import { app } from 'electron'
 import GitHubReleaseClient, {
+  type GitHubRelease,
   isNewerVersion,
   selectWindowsInstaller,
-  type GitHubRelease,
 } from './GitHubReleaseClient'
 
 /** Runs assisted NSIS updates silently and forces the updated application to reopen. */

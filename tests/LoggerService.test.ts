@@ -12,7 +12,12 @@ const testDir = join(__dirname, '..', '.test-logs')
 vi.mock('electron-log/main', () => {
   const mockLogFn = vi.fn()
   const createTransport = () => ({
-    file: { maxSize: 0, format: '', level: 'info', resolvePathFn: null as (() => string) | null },
+    file: {
+      maxSize: 0,
+      format: '',
+      level: 'info',
+      resolvePathFn: null as (() => string) | null,
+    },
     console: { format: '', level: 'info' },
   })
   return {

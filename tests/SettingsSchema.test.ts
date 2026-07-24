@@ -142,7 +142,10 @@ describe('parsePersistedSettings', () => {
   // -- settingsRevision mismatch --------------------------------------------
 
   it('forces settingsRevision to 1 when the input declares a different revision', () => {
-    const result = parsePersistedSettings({ settingsRevision: 99, theme: 'light' })
+    const result = parsePersistedSettings({
+      settingsRevision: 99,
+      theme: 'light',
+    })
 
     expect(result.settingsRevision).toBe(1)
     expect(result.theme).toBe('light')
@@ -154,7 +157,9 @@ describe('parsePersistedSettings', () => {
   })
 
   it('forces settingsRevision to 1 when revision is a non-numeric value', () => {
-    const result = parsePersistedSettings({ settingsRevision: 'latest' } as unknown)
+    const result = parsePersistedSettings({
+      settingsRevision: 'latest',
+    } as unknown)
 
     expect(result.settingsRevision).toBe(1)
   })

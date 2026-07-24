@@ -2,15 +2,15 @@
  * Manages AI scan sessions in the collapsible workspace sidebar.
  */
 
-import { useState } from 'react'
-import { Button, Dropdown, Empty, Input, Modal, Tooltip, type MenuProps } from 'antd'
-import { Download, FileDown, FileText, Pencil, Plus, Trash2 } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
 import { useTheme } from '@renderer/context/ThemeProvider'
-import type { SessionSummary } from '@shared/types'
 import { useAppDispatch, useAppSelector } from '@renderer/store'
 import { setCurrentSession, setSessions } from '@renderer/store/appSlice'
 import { formatDate } from '@renderer/utils/formatters'
+import type { SessionSummary } from '@shared/types'
+import { Button, Dropdown, Empty, Input, type MenuProps, Modal, Tooltip } from 'antd'
+import { Download, FileDown, FileText, Pencil, Plus, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import styles from './SessionsSidebar.module.scss'
 
 /** Collapsible sidebar component for browsing, renaming, exporting, and deleting sessions. */

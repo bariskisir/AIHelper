@@ -2,16 +2,16 @@
  * Composes the main scan workspace with text/image scanning and streaming output.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Button, Input, Select, Tooltip, Typography } from 'antd'
-import { Copy, FileText, Image, Send, StopCircle, X } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
-import ReactMarkdown from 'react-markdown'
-import { THINKING_LEVELS, type AppSettingsPatch, type ThinkingLevel } from '@shared/types'
 import SessionsSidebar from '@renderer/components/sidebar/SessionsSidebar'
 import { useScanActions } from '@renderer/hooks/useScanActions'
 import { useSettingsActions } from '@renderer/hooks/useSettingsActions'
 import { useAppSelector } from '@renderer/store'
+import { type AppSettingsPatch, THINKING_LEVELS, type ThinkingLevel } from '@shared/types'
+import { Button, Input, Select, Tooltip, Typography } from 'antd'
+import { Copy, FileText, Image, Send, StopCircle, X } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import ReactMarkdown from 'react-markdown'
 import styles from './HomePage.module.scss'
 
 const { TextArea } = Input
@@ -400,7 +400,10 @@ const HomePage = (): React.JSX.Element => {
                 size="small"
                 className={styles.promptColSelect || ''}
                 value={settings.textSystemPromptPreset || 'text-solver'}
-                options={textPrompts.map((p) => ({ value: p.id, label: p.name }))}
+                options={textPrompts.map((p) => ({
+                  value: p.id,
+                  label: p.name,
+                }))}
                 onChange={(v) => {
                   void saveSettings({ textSystemPromptPreset: v })
                 }}
@@ -414,7 +417,10 @@ const HomePage = (): React.JSX.Element => {
                 size="small"
                 className={styles.promptColSelect || ''}
                 value={settings.imageSystemPromptPreset || 'image-solver'}
-                options={imagePrompts.map((p) => ({ value: p.id, label: p.name }))}
+                options={imagePrompts.map((p) => ({
+                  value: p.id,
+                  label: p.name,
+                }))}
                 onChange={(v) => {
                   void saveSettings({ imageSystemPromptPreset: v })
                 }}

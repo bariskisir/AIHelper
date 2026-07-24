@@ -2,13 +2,13 @@
  * Renders application identity, author, repository, and license information.
  */
 
+import { useDesktopActions } from '@renderer/hooks/useDesktopActions'
+import { useAppSelector } from '@renderer/store'
+import { APP_AUTHOR, APP_AUTHOR_URL, APP_REPO, APP_REPO_URL } from '@shared/appInfo'
 import { Button, Tag } from 'antd'
 import { ExternalLink } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { APP_AUTHOR, APP_AUTHOR_URL, APP_REPO, APP_REPO_URL } from '@shared/appInfo'
 import logoUrl from '../../../../../../build/icon.svg'
-import { useDesktopActions } from '@renderer/hooks/useDesktopActions'
-import { useAppSelector } from '@renderer/store'
 import SettingLabel from '../components/SettingLabel'
 import styles from '../SettingsPage.module.scss'
 

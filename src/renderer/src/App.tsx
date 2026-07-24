@@ -2,11 +2,6 @@
  * Composes the reusable desktop shell, AIHelper workspace, settings, and update notice.
  */
 
-import { lazy, Suspense } from 'react'
-import { Button, Spin } from 'antd'
-import { Download } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
-import styles from './App.module.scss'
 import AppSidebar from '@renderer/components/app/AppSidebar'
 import Titlebar from '@renderer/components/app/Titlebar'
 import { useAppInit } from '@renderer/hooks/useAppInit'
@@ -14,6 +9,11 @@ import { useDesktopActions } from '@renderer/hooks/useDesktopActions'
 import { useSettingsActions } from '@renderer/hooks/useSettingsActions'
 import HomePage from '@renderer/pages/home/HomePage'
 import { useAppSelector } from '@renderer/store'
+import { Button, Spin } from 'antd'
+import { Download } from 'lucide-react'
+import { lazy, Suspense } from 'react'
+import { useTranslation } from 'react-i18next'
+import styles from './App.module.scss'
 
 const SettingsPage = lazy(() => import('@renderer/pages/settings/SettingsPage'))
 

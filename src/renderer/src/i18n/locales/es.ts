@@ -148,7 +148,11 @@ export default {
     downloading: 'Descargando actualización... {{percent}}%',
     releaseNotes: 'Notas de versión',
   },
-  themes: { system: 'Tema del sistema', light: 'Tema claro', dark: 'Tema oscuro' },
+  themes: {
+    system: 'Tema del sistema',
+    light: 'Tema claro',
+    dark: 'Tema oscuro',
+  },
   locales: {
     en: 'Inglés',
     tr: 'Turco',

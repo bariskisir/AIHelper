@@ -48,7 +48,10 @@ export default {
     exportAll: 'すべてエクスポート',
   },
   controls: { compactView: 'コンパクト表示', fullView: 'フル表示' },
-  sidebar: { showSidebar: 'サイドバーを表示', hideSidebar: 'サイドバーを非表示' },
+  sidebar: {
+    showSidebar: 'サイドバーを表示',
+    hideSidebar: 'サイドバーを非表示',
+  },
   settings: {
     title: '設定',
     general: '一般',
@@ -145,7 +148,11 @@ export default {
     downloading: 'アップデートをダウンロード中... {{percent}}%',
     releaseNotes: 'リリースノート',
   },
-  themes: { system: 'システムテーマ', light: 'ライトテーマ', dark: 'ダークテーマ' },
+  themes: {
+    system: 'システムテーマ',
+    light: 'ライトテーマ',
+    dark: 'ダークテーマ',
+  },
   locales: {
     en: '英語',
     tr: 'トルコ語',
