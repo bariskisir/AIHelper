@@ -3,7 +3,7 @@
  */
 
 export const AI_PROVIDERS = ['chatgpt'] as const
-export const APP_LOCALES = ['en', 'tr', 'de', 'fr', 'pt', 'zh', 'es'] as const
+export const APP_LOCALES = ['en', 'tr', 'de', 'fr', 'pt', 'zh', 'es', 'ru', 'ja', 'ko'] as const
 export const THEME_MODES = ['system', 'light', 'dark'] as const
 export const TIME_FORMATS = ['24-hour', '12-hour'] as const
 export const EXPORT_FORMATS = ['txt', 'json'] as const
@@ -44,11 +44,19 @@ export interface AiModel {
   thinkingVariants: { value: string; description: string }[]
 }
 
+/** A single rate-limit window with usage percentage and display label. */
+export interface ChatGptUsageWindow {
+  label: string
+  percent: number
+  resetAt: number
+}
+
 /** Renderer-safe snapshot of the current ChatGPT authentication and model state. */
 export interface ChatGptState {
   status: 'signed-out' | 'signing-in' | 'signed-in' | 'error'
   accountEmail: string | null
   limitLabel: string | null
+  usageWindows: ChatGptUsageWindow[]
   models: AiModel[]
   error?: string | null | undefined
 }

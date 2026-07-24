@@ -6,7 +6,11 @@ import { createHash, randomBytes } from 'node:crypto'
 import { createServer } from 'node:http'
 import { shell } from 'electron'
 import type { ChatGptState, ServiceTier, ThinkingLevel, VerbosityLevel } from '@shared/types'
-import { formatChatGptUsage, normalizeChatGptModels } from './ChatGptMetadata'
+import {
+  formatChatGptUsage,
+  normalizeChatGptModels,
+  parseChatGptUsageWindows,
+} from './ChatGptMetadata'
 import type CredentialService from './CredentialService'
 import type { ChatGptAuthTokens } from './CredentialService'
 import type LoggerService from './LoggerService'
@@ -33,6 +37,7 @@ export default class ChatGptService {
     status: 'signed-out',
     accountEmail: '',
     limitLabel: '',
+    usageWindows: [],
     models: [],
   }
   private loginInProgress = false
@@ -113,6 +118,7 @@ export default class ChatGptService {
       status: 'signed-out',
       accountEmail: '',
       limitLabel: '',
+      usageWindows: [],
       models: [],
     }
     this.events.onState(this.getState())
@@ -230,6 +236,7 @@ export default class ChatGptService {
       if (!response.ok) return
       const payload = await response.json()
       this.state.limitLabel = formatChatGptUsage(payload)
+      this.state.usageWindows = parseChatGptUsageWindows(payload)
     } catch (error) {
       this.logger.warn('ChatGPT', 'Usage fetch failed.', error)
     }

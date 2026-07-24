@@ -22,6 +22,23 @@ import { useSettingsActions } from '@renderer/hooks/useSettingsActions'
 import SettingLabel from '../components/SettingLabel'
 import styles from '../SettingsPage.module.scss'
 
+const usageColor = (percent: number): string => {
+  if (percent >= 95) return '#F44336'
+  if (percent >= 80) return '#FF9800'
+  if (percent >= 50) return '#FFC107'
+  return '#4CAF50'
+}
+
+const formatRemaining = (resetAt: number): string => {
+  const diff = Math.max(0, resetAt - Date.now())
+  const days = Math.floor(diff / 86_400_000)
+  const hours = Math.floor((diff % 86_400_000) / 3_600_000)
+  const minutes = Math.floor((diff % 3_600_000) / 60_000)
+  if (days > 0) return `${days}d ${hours}h`
+  if (hours > 0) return `${hours}h ${minutes}m`
+  return `${minutes}m`
+}
+
 const ProviderSettingsSection = (): React.JSX.Element => {
   const dispatch = useAppDispatch()
   const settings = useAppSelector((state) => state.app.settings)
@@ -86,23 +103,23 @@ const ProviderSettingsSection = (): React.JSX.Element => {
     }
     return THINKING_LEVELS.map((l) => ({
       value: l,
-      label: l,
+      label: t(`settings.thinkingLevels.${l}`),
     }))
-  }, [selectedModel])
+  }, [selectedModel, t])
 
   const verbosityOptions = useMemo(() => {
     return VERBOSITY_LEVELS.map((l) => ({
       value: l,
-      label: l,
+      label: t(`settings.verbosities.${l}`),
     }))
-  }, [])
+  }, [t])
 
   const serviceTierOptions = useMemo(() => {
     return SERVICE_TIERS.map((l) => ({
       value: l,
-      label: l,
+      label: t(`settings.serviceTiers.${l}`),
     }))
-  }, [])
+  }, [t])
 
   const handleModelChange = (modelId: string) => {
     const nextModel = chatGpt.models.find((m) => m.id === modelId)
@@ -127,16 +144,11 @@ const ProviderSettingsSection = (): React.JSX.Element => {
         <div className={styles.settingRow}>
           <SettingLabel
             title={signedIn ? chatGpt.accountEmail || 'ChatGPT' : t('settings.chatGptNotSignedIn')}
-            description={signedIn ? chatGpt.limitLabel || '' : t('settings.chatGptNotSignedIn')}
+            description={
+              signedIn && chatGpt.limitLabel ? chatGpt.limitLabel.split(' · ')[0] || '' : ''
+            }
           />
           <div className={styles.settingControl}>
-            {signedIn && (
-              <div className={styles.statusTag}>
-                <Tag color="green" icon={<CircleCheck size={12} />}>
-                  {t('settings.connected')}
-                </Tag>
-              </div>
-            )}
             {signedIn ? (
               <>
                 <Button
@@ -174,6 +186,55 @@ const ProviderSettingsSection = (): React.JSX.Element => {
             )}
           </div>
         </div>
+
+        {signedIn &&
+          chatGpt.usageWindows.length > 0 &&
+          chatGpt.usageWindows.map((w) => (
+            <div className={styles.settingRow} key={w.label}>
+              <SettingLabel
+                title={
+                  w.label === 'Session'
+                    ? t('usage.session')
+                    : w.label === 'Weekly'
+                      ? t('usage.weekly')
+                      : w.label
+                }
+                description=""
+              />
+              <div className={`${styles.settingControl} ${styles.rowControl}`}>
+                <div style={{ width: 200 }}>
+                  <div
+                    style={{
+                      height: 6,
+                      borderRadius: 3,
+                      background: 'var(--color-border)',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${w.percent}%`,
+                        borderRadius: 3,
+                        background: usageColor(w.percent),
+                        transition: 'width 0.3s',
+                      }}
+                    />
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--color-text-3)', marginTop: 2 }}>
+                    <span>
+                      {w.percent}% {t('usage.used')}
+                    </span>
+                    {w.resetAt > 0 && (
+                      <span style={{ float: 'right' }}>
+                        {t('usage.resetsIn')} {formatRemaining(w.resetAt)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
 
         {signedIn && (
           <>

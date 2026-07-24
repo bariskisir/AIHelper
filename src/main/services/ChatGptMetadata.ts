@@ -2,7 +2,7 @@
  * Normalizes untrusted ChatGPT model-catalog and usage payloads for the renderer.
  */
 
-import type { AiModel } from '@shared/types'
+import type { AiModel, ChatGptUsageWindow } from '@shared/types'
 
 type JsonObject = Record<string, unknown>
 
@@ -61,6 +61,49 @@ export const normalizeChatGptModels = (payload: unknown): AiModel[] => {
   models.sort((left, right) => left.displayName.localeCompare(right.displayName))
   if (!models.some((model) => model.isDefault) && models[0]) models[0].isDefault = true
   return models
+}
+
+const WINDOW_LABELS: Record<string, string> = {
+  primary_window: 'Session',
+  secondary_window: 'Weekly',
+}
+
+/** Extracts usage windows with percentage, reset time, and a display label. */
+export const parseChatGptUsageWindows = (
+  payload: unknown,
+  nowMs = Date.now(),
+): ChatGptUsageWindow[] => {
+  const root = asObject(payload)
+  if (!root) return []
+  const rates = [
+    asObject(root.rate_limit),
+    ...(Array.isArray(root.additional_rate_limits)
+      ? root.additional_rate_limits.map((item) => asObject(asObject(item)?.rate_limit))
+      : []),
+  ].filter((rate): rate is JsonObject => rate !== null)
+  const windows: ChatGptUsageWindow[] = []
+  for (const rate of rates) {
+    for (const key of ['primary_window', 'secondary_window']) {
+      const window = asObject(rate[key])
+      if (!window) continue
+      const percent = numericValue(window.used_percent)
+      if (percent === null) continue
+      let resetAt = 0
+      for (const field of ['reset_at', 'resets_at', 'reset_timestamp']) {
+        const value = numericValue(window[field])
+        if (value !== null && value > 0) {
+          resetAt = value > 10_000_000_000 ? value : value * 1_000
+          break
+        }
+      }
+      windows.push({
+        label: WINDOW_LABELS[key] ?? key,
+        percent: Math.min(100, Math.max(0, Math.round(percent))),
+        resetAt: resetAt > nowMs ? resetAt : 0,
+      })
+    }
+  }
+  return windows
 }
 
 /** Formats plan usage as used percentage and a fixed local day.month hour:minute reset time. */

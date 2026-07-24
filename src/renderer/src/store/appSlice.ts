@@ -50,6 +50,7 @@ const initialState: AppState = {
     status: 'signed-out',
     accountEmail: '',
     limitLabel: '',
+    usageWindows: [],
     models: [],
   },
   sessions: [],
