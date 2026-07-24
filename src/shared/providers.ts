@@ -4,17 +4,17 @@
 
 import type { AiModel } from './types'
 
-/** Resolves the default selected model ID: prefers first model with "mini", then "terra", then default/first. */
+/** Resolves the preferred model ID: mini → terra → sol → alphabetical first. */
 export const selectPreferredModelId = (models: AiModel[]): string => {
-  if (!models || models.length === 0) return ''
-  const miniModel = models.find(
-    (m) => m.id.toLowerCase().includes('mini') || m.displayName.toLowerCase().includes('mini'),
+  const sorted = [...models].sort((left, right) =>
+    left.displayName.localeCompare(right.displayName),
   )
-  if (miniModel) return miniModel.id
-  const terraModel = models.find(
-    (m) => m.id.toLowerCase().includes('terra') || m.displayName.toLowerCase().includes('terra'),
-  )
-  if (terraModel) return terraModel.id
-  const defaultModel = models.find((m) => m.isDefault)
-  return defaultModel ? defaultModel.id : (models[0]?.id ?? '')
+  for (const keyword of ['mini', 'terra', 'sol']) {
+    const match = sorted.find(
+      (m) =>
+        m.id.toLowerCase().includes(keyword) || m.displayName.toLowerCase().includes(keyword),
+    )
+    if (match) return match.id
+  }
+  return sorted[0]?.id ?? ''
 }

@@ -155,8 +155,8 @@ export default class ChatGptService {
     imageBase64: string | undefined,
     model: string,
     thinkingLevel: ThinkingLevel,
-    _verbosity: VerbosityLevel,
-    _serviceTier: ServiceTier,
+    verbosity: VerbosityLevel,
+    serviceTier: ServiceTier,
     onDelta: (delta: string) => void,
     signal: AbortSignal,
   ): Promise<string> {
@@ -187,10 +187,12 @@ export default class ChatGptService {
       store: false,
       include: ['reasoning.encrypted_content'],
       instructions: systemPrompt || '.',
+      text: { verbosity },
       ...(thinkingLevel !== 'off' && supportsThinking
         ? { reasoning: { effort: thinkingLevel, summary: 'auto' } }
         : {}),
     }
+    if (serviceTier === 'fast') body.service_tier = 'priority'
 
     const response = await fetch(CHATGPT_RESPONSES_URL, {
       method: 'POST',

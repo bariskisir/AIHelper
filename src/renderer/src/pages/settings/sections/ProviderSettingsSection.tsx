@@ -65,7 +65,17 @@ const ProviderSettingsSection = (): React.JSX.Element => {
       if (state.models && state.models.length > 0) {
         const preferredId = selectPreferredModelId(state.models)
         if (preferredId) {
-          void save({ chatGptModel: preferredId })
+          const preferredModel = state.models.find((m) => m.id === preferredId)
+          const patch: Partial<typeof settings> = { chatGptModel: preferredId }
+          if (preferredModel?.thinkingVariants?.length) {
+            const hasCurrent = preferredModel.thinkingVariants.some(
+              (v) => v.value === settings.chatGptThinkingLevel,
+            )
+            if (!hasCurrent && preferredModel.thinkingVariants[0]) {
+              patch.chatGptThinkingLevel = preferredModel.thinkingVariants[0].value as ThinkingLevel
+            }
+          }
+          void save(patch)
         }
       }
     } catch {
@@ -77,11 +87,18 @@ const ProviderSettingsSection = (): React.JSX.Element => {
   const signedIn = chatGpt.status === 'signed-in'
 
   useEffect(() => {
-    if (signedIn && chatGpt.models.length > 0 && !settings.chatGptModel) {
+    const configuredModelAvailable = chatGpt.models.some((model) => model.id === settings.chatGptModel)
+    if (signedIn && chatGpt.models.length > 0 && !configuredModelAvailable) {
       const preferredId = selectPreferredModelId(chatGpt.models)
-      if (preferredId) void save({ chatGptModel: preferredId })
+      if (!preferredId) return
+      const preferredModel = chatGpt.models.find((m) => m.id === preferredId)
+      void save({
+        chatGptModel: preferredId,
+        chatGptThinkingLevel:
+          preferredModel?.thinkingVariants[0]?.value ?? settings.chatGptThinkingLevel,
+      })
     }
-  }, [signedIn, chatGpt.models, settings.chatGptModel, save])
+  }, [signedIn, chatGpt.models, settings, save])
 
   const selectedModel = useMemo(() => {
     return chatGpt.models.find((m) => m.id === settings.chatGptModel) ?? chatGpt.models[0]
@@ -108,18 +125,18 @@ const ProviderSettingsSection = (): React.JSX.Element => {
   }, [selectedModel, t])
 
   const verbosityOptions = useMemo(() => {
-    return VERBOSITY_LEVELS.map((l) => ({
-      value: l,
-      label: t(`settings.verbosities.${l}`),
+    return VERBOSITY_LEVELS.map((value) => ({
+      value,
+      label: value,
     }))
-  }, [t])
+  }, [])
 
   const serviceTierOptions = useMemo(() => {
-    return SERVICE_TIERS.map((l) => ({
-      value: l,
-      label: t(`settings.serviceTiers.${l}`),
+    return SERVICE_TIERS.map((value) => ({
+      value,
+      label: value,
     }))
-  }, [t])
+  }, [])
 
   const handleModelChange = (modelId: string) => {
     const nextModel = chatGpt.models.find((m) => m.id === modelId)
