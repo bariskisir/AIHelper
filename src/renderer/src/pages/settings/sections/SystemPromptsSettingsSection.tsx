@@ -138,9 +138,6 @@ const SystemPromptsSettingsSection = (): React.JSX.Element => {
 
   return (
     <div className={styles.settingContainer}>
-      <h1 className={styles.settingPageTitle}>{t('settings.prompts')}</h1>
-
-      {/* Text System Prompts */}
       <h2 className={styles.groupTitle}>Text</h2>
       <section className={styles.settingGroup}>
         <div className={styles.settingRow}>
