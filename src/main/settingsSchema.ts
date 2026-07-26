@@ -7,6 +7,8 @@ import {
   type AppSettings,
   DEFAULT_SETTINGS,
   LOG_LEVELS,
+  NAVBAR_POSITIONS,
+  PAGE_ZOOM_LIMITS,
   SERVICE_TIERS,
   THEME_MODES,
   THINKING_LEVELS,
@@ -27,6 +29,8 @@ const settingsFieldsSchema = z.object({
   settingsRevision: z.literal(1),
   uiLanguage: z.enum(APP_LOCALES),
   theme: z.enum(THEME_MODES),
+  navbarPosition: z.enum(NAVBAR_POSITIONS),
+  pageZoom: z.number().min(PAGE_ZOOM_LIMITS.min).max(PAGE_ZOOM_LIMITS.max),
   timeFormat: z.enum(TIME_FORMATS),
   chatGptModel: z.string().max(100),
   chatGptThinkingLevel: z.enum(THINKING_LEVELS),
@@ -43,12 +47,22 @@ const settingsFieldsSchema = z.object({
   systemPrompts: z.array(systemPromptSchema),
   compactMode: z.boolean(),
   alwaysOnTop: z.boolean(),
+  showTrayIcon: z.boolean(),
+  minimizeToTrayOnClose: z.boolean(),
   autoUpdate: z.boolean(),
   logLevel: z.enum(LOG_LEVELS),
 })
 
 /** Complete Zod schema for validating persisted application settings. */
-export const settingsSchema = settingsFieldsSchema
+export const settingsSchema = settingsFieldsSchema.superRefine((settings, context) => {
+  if (settings.minimizeToTrayOnClose && !settings.showTrayIcon) {
+    context.addIssue({
+      code: 'custom',
+      path: ['minimizeToTrayOnClose'],
+      message: 'Minimize to tray requires the tray icon to be enabled.',
+    })
+  }
+})
 
 /** Partial settings schema used for IPC patches, requiring at least one field. */
 export const settingsPatchSchema = settingsFieldsSchema

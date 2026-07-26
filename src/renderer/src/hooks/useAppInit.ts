@@ -12,6 +12,7 @@ import {
   setChatGptState,
   setCurrentSession,
   setPendingInputText,
+  setPage,
   setSessions,
   setUpdateState,
 } from '@renderer/store/appSlice'
@@ -53,6 +54,7 @@ export const useAppInit = (): void => {
         dispatch(setChatGptState(state))
       }),
       window.app.onUpdateState((event) => dispatch(setUpdateState(event))),
+      window.app.onSettingsOpenRequested(() => dispatch(setPage('settings'))),
       window.app.onError((event) => {
         logger.error('Main process reported an application error.', event.message)
         void messageRef.current.error(event.message, 8)

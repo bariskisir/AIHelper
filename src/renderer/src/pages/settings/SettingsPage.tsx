@@ -4,11 +4,12 @@
 
 import { useAppDispatch, useAppSelector } from '@renderer/store'
 import { type SettingsSection, setSettingsSection } from '@renderer/store/appSlice'
-import { Cpu, Info, RefreshCw, ScrollText, Settings2, Sliders } from 'lucide-react'
+import { Cpu, Info, Monitor, RefreshCw, ScrollText, Settings2, Sliders } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import styles from './SettingsPage.module.scss'
 import AboutSettingsSection from './sections/AboutSettingsSection'
 import GeneralSettingsSection from './sections/GeneralSettingsSection'
+import DisplaySettingsSection from './sections/DisplaySettingsSection'
 import LoggingSettingsSection from './sections/LoggingSettingsSection'
 import ProviderSettingsSection from './sections/ProviderSettingsSection'
 import SystemPromptsSettingsSection from './sections/SystemPromptsSettingsSection'
@@ -29,6 +30,7 @@ const SettingsPage = (): React.JSX.Element => {
       label: t('settings.general'),
       icon: <Settings2 size={17} />,
     },
+    { key: 'display', label: t('settings.display'), icon: <Monitor size={17} /> },
     { key: 'provider', label: t('settings.provider'), icon: <Cpu size={17} /> },
     {
       key: 'prompts',
@@ -50,6 +52,7 @@ const SettingsPage = (): React.JSX.Element => {
 
   /** Resolves the active category component without keeping inactive forms mounted. */
   const renderSection = (): React.JSX.Element => {
+    if (section === 'display') return <DisplaySettingsSection />
     if (section === 'provider') return <ProviderSettingsSection />
     if (section === 'prompts') return <SystemPromptsSettingsSection />
     if (section === 'updates') return <UpdatesSettingsSection />

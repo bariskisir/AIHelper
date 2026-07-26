@@ -26,12 +26,12 @@ export default class WindowService {
       show: false,
       backgroundColor: '#181818',
       title: 'AI Helper',
-      titleBarStyle: 'hidden',
-      titleBarOverlay: {
-        color: '#1f1f1f',
-        symbolColor: '#ffffff99',
-        height: 42,
-      },
+      ...(process.platform === 'darwin'
+        ? {
+            titleBarStyle: 'hidden' as const,
+            titleBarOverlay: { color: '#1f1f1f', symbolColor: '#ffffff99', height: 42 },
+          }
+        : { frame: false }),
       webPreferences: {
         preload: join(__dirname, '../preload/index.js'),
         contextIsolation: true,

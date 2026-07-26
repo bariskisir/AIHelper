@@ -5,6 +5,9 @@
 export const AI_PROVIDERS = ['chatgpt'] as const
 export const APP_LOCALES = ['en', 'tr', 'de', 'fr', 'pt', 'zh', 'es', 'ru', 'ja', 'ko'] as const
 export const THEME_MODES = ['system', 'light', 'dark'] as const
+export const NAVBAR_POSITIONS = ['left', 'top'] as const
+/** Defines the supported page zoom range and control increment. */
+export const PAGE_ZOOM_LIMITS = { min: 0.5, max: 2, step: 0.1, default: 1 } as const
 export const TIME_FORMATS = ['24-hour', '12-hour'] as const
 export const EXPORT_FORMATS = ['txt', 'json'] as const
 export const LOG_LEVELS = ['error', 'warn', 'info', 'debug', 'verbose'] as const
@@ -16,6 +19,7 @@ export const THINKING_LEVELS = ['off', 'low', 'medium', 'high', 'xhigh'] as cons
 export type AiProvider = string
 export type AppLocale = (typeof APP_LOCALES)[number]
 export type ThemeMode = (typeof THEME_MODES)[number]
+export type NavbarPosition = (typeof NAVBAR_POSITIONS)[number]
 export type TimeFormat = (typeof TIME_FORMATS)[number]
 export type ExportFormat = (typeof EXPORT_FORMATS)[number]
 export type LogLevel = (typeof LOG_LEVELS)[number]
@@ -66,6 +70,8 @@ export interface AppSettings {
   settingsRevision: 1
   uiLanguage: AppLocale
   theme: ThemeMode
+  navbarPosition: NavbarPosition
+  pageZoom: number
   timeFormat: TimeFormat
   chatGptModel: string
   chatGptThinkingLevel: ThinkingLevel
@@ -82,6 +88,8 @@ export interface AppSettings {
   systemPrompts: SystemPrompt[]
   compactMode: boolean
   alwaysOnTop: boolean
+  showTrayIcon: boolean
+  minimizeToTrayOnClose: boolean
   autoUpdate: boolean
   logLevel: LogLevel
 }
@@ -92,6 +100,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   settingsRevision: 1,
   uiLanguage: 'en',
   theme: 'system',
+  navbarPosition: 'top',
+  pageZoom: PAGE_ZOOM_LIMITS.default,
   timeFormat: '24-hour',
   chatGptModel: '',
   chatGptThinkingLevel: 'low',
@@ -123,6 +133,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   ],
   compactMode: false,
   alwaysOnTop: false,
+  showTrayIcon: true,
+  minimizeToTrayOnClose: true,
   autoUpdate: true,
   logLevel: 'info',
 }
@@ -252,6 +264,14 @@ export interface AiHelperApi {
   exportSession(id: string | null, format: ExportFormat): Promise<boolean>
   fetchModels(): Promise<AiModel[]>
   setAlwaysOnTop(enabled: boolean): Promise<void>
+  /** Minimizes the main application window. */
+  minimizeWindow(): Promise<void>
+  /** Toggles maximized state and returns the resulting state. */
+  toggleMaximizeWindow(): Promise<boolean>
+  /** Closes the main application window through its graceful shutdown path. */
+  closeWindow(): Promise<void>
+  /** Reports whether the main application window is maximized. */
+  isWindowMaximized(): Promise<boolean>
   setTheme(theme: Exclude<ThemeMode, 'system'>): Promise<void>
   openExternal(url: string): Promise<void>
   openLogsDirectory(): Promise<void>
@@ -263,5 +283,9 @@ export interface AiHelperApi {
   onChatGptState(listener: (event: ChatGptState) => void): () => void
   onError(listener: (event: AppErrorEvent) => void): () => void
   onUpdateState(listener: (event: UpdateStateEvent) => void): () => void
+  /** Subscribes to native maximize and restore state changes. */
+  onWindowMaximizedChange(listener: (maximized: boolean) => void): () => void
+  /** Subscribes to settings navigation requested from native desktop UI. */
+  onSettingsOpenRequested(listener: () => void): () => void
   onShortcut(listener: (shortcut: string) => void): () => void
 }

@@ -67,6 +67,14 @@ const api: AiHelperApi = {
   fetchModels: () => ipcRenderer.invoke('models:fetch'),
   /** Changes the native always-on-top state. */
   setAlwaysOnTop: (enabled) => ipcRenderer.invoke(IpcChannel.WindowAlwaysOnTop, enabled),
+  /** Minimizes the main application window. */
+  minimizeWindow: () => ipcRenderer.invoke(IpcChannel.WindowMinimize),
+  /** Toggles the main application window between maximized and restored states. */
+  toggleMaximizeWindow: () => ipcRenderer.invoke(IpcChannel.WindowToggleMaximize),
+  /** Closes the main application window. */
+  closeWindow: () => ipcRenderer.invoke(IpcChannel.WindowClose),
+  /** Retrieves the main application window's maximized state. */
+  isWindowMaximized: () => ipcRenderer.invoke(IpcChannel.WindowIsMaximized),
   /** Synchronizes native window chrome with the resolved renderer theme. */
   setTheme: (theme) => ipcRenderer.invoke(IpcChannel.ThemeSet, theme),
   /** Opens an allow-listed URL in the system browser. */
@@ -90,6 +98,12 @@ const api: AiHelperApi = {
   onError: (listener) => subscribe<AppErrorEvent>(IpcChannel.AppError, listener),
   /** Subscribes to updater lifecycle events. */
   onUpdateState: (listener) => subscribe<UpdateStateEvent>(IpcChannel.UpdateState, listener),
+  /** Subscribes to maximize and restore state changes. */
+  onWindowMaximizedChange: (listener) =>
+    subscribe<boolean>(IpcChannel.WindowMaximizedChanged, listener),
+  /** Subscribes to settings navigation requested by the tray menu. */
+  onSettingsOpenRequested: (listener) =>
+    subscribe<void>(IpcChannel.SettingsOpenRequested, listener),
   /** Subscribes to global keyboard shortcuts. */
   onShortcut: (listener) => subscribe<string>('shortcut', listener),
 }

@@ -207,9 +207,9 @@ describe('appSlice – navigation', () => {
   })
 
   it('setSettingsSection selects a settings category', () => {
-    const state = reducer(undefined, setSettingsSection('provider'))
+    const state = reducer(undefined, setSettingsSection('display'))
 
-    expect(state.settingsSection).toBe('provider')
+    expect(state.settingsSection).toBe('display')
 
     const changed = reducer(state, setSettingsSection('prompts'))
     expect(changed.settingsSection).toBe('prompts')

@@ -6,7 +6,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { SessionDocument, SessionItem } from '../src/shared/types'
+import { DEFAULT_SETTINGS, type SessionDocument, type SessionItem } from '../src/shared/types'
 
 // ---------------------------------------------------------------------------
 // In-memory filesystem shared by all fs/promises mocks
@@ -108,6 +108,35 @@ describe('StorageService', () => {
   beforeEach(() => {
     fileStore.clear()
     uuidCounter = 0
+  })
+
+  describe('settings persistence', () => {
+    it('loads the display and tray defaults when no settings file exists', async () => {
+      const settings = await newService().loadSettings()
+      expect(settings).toEqual(DEFAULT_SETTINGS)
+      expect(settings.navbarPosition).toBe('top')
+      expect(settings.pageZoom).toBe(1)
+      expect(settings.showTrayIcon).toBe(true)
+      expect(settings.minimizeToTrayOnClose).toBe(true)
+    })
+
+    it('saves and reloads display and tray settings', async () => {
+      const svc = newService()
+      const saved = await svc.updateSettings({
+        navbarPosition: 'left',
+        pageZoom: 1.3,
+        showTrayIcon: true,
+        minimizeToTrayOnClose: true,
+      })
+      expect(saved.navbarPosition).toBe('left')
+      expect(saved.pageZoom).toBe(1.3)
+
+      const reloaded = await svc.loadSettings()
+      expect(reloaded.navbarPosition).toBe('left')
+      expect(reloaded.pageZoom).toBe(1.3)
+      expect(reloaded.showTrayIcon).toBe(true)
+      expect(reloaded.minimizeToTrayOnClose).toBe(true)
+    })
   })
 
   // -- createSession --------------------------------------------------------

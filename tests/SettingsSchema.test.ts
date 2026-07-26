@@ -5,7 +5,11 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { parsePersistedSettings } from '../src/main/settingsSchema'
+import {
+  parsePersistedSettings,
+  settingsPatchSchema,
+  settingsSchema,
+} from '../src/main/settingsSchema'
 import { DEFAULT_SETTINGS } from '../src/shared/types'
 
 // ---------------------------------------------------------------------------
@@ -49,6 +53,10 @@ describe('parsePersistedSettings', () => {
 
     expect(result).toEqual(DEFAULT_SETTINGS)
     expect(result.settingsRevision).toBe(1)
+    expect(result.navbarPosition).toBe('top')
+    expect(result.pageZoom).toBe(1)
+    expect(result.showTrayIcon).toBe(true)
+    expect(result.minimizeToTrayOnClose).toBe(true)
   })
 
   // -- valid partial settings -----------------------------------------------
@@ -64,11 +72,19 @@ describe('parsePersistedSettings', () => {
   it('merges multiple valid fields while preserving other defaults', () => {
     const result = parsePersistedSettings({
       theme: 'light',
+      navbarPosition: 'top',
+      pageZoom: 1.4,
+      showTrayIcon: true,
+      minimizeToTrayOnClose: true,
       compactMode: true,
       timeFormat: '12-hour',
     })
 
     expect(result.theme).toBe('light')
+    expect(result.navbarPosition).toBe('top')
+    expect(result.pageZoom).toBe(1.4)
+    expect(result.showTrayIcon).toBe(true)
+    expect(result.minimizeToTrayOnClose).toBe(true)
     expect(result.compactMode).toBe(true)
     expect(result.timeFormat).toBe('12-hour')
     expect(result.uiLanguage).toBe(DEFAULT_SETTINGS.uiLanguage)
@@ -123,6 +139,12 @@ describe('parsePersistedSettings', () => {
     expect(result.alwaysOnTop).toBe(false)
     expect(result.autoUpdate).toBe(true)
     expect(result.logLevel).toBe(DEFAULT_SETTINGS.logLevel)
+  })
+
+  it('falls back to display defaults for an invalid navbar position or zoom', () => {
+    const result = parsePersistedSettings({ navbarPosition: 'bottom', pageZoom: 2.1 })
+    expect(result.navbarPosition).toBe('top')
+    expect(result.pageZoom).toBe(1)
   })
 
   it('recovers model-name strings even when other fields are invalid', () => {
@@ -209,5 +231,36 @@ describe('parsePersistedSettings', () => {
       expect(typeof result.logLevel).toBe('string')
       expect(Array.isArray(result.systemPrompts)).toBe(true)
     }
+  })
+})
+
+describe('settingsSchema', () => {
+  it('rejects close-to-tray when the tray icon is disabled', () => {
+    const result = settingsSchema.safeParse({
+      ...DEFAULT_SETTINGS,
+      showTrayIcon: false,
+      minimizeToTrayOnClose: true,
+    })
+    expect(result.success).toBe(false)
+  })
+})
+
+describe('settingsPatchSchema', () => {
+  it('accepts valid display and tray changes', () => {
+    const result = settingsPatchSchema.safeParse({
+      navbarPosition: 'top',
+      pageZoom: 1.5,
+      showTrayIcon: true,
+      minimizeToTrayOnClose: true,
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects an unknown navbar position', () => {
+    expect(settingsPatchSchema.safeParse({ navbarPosition: 'bottom' }).success).toBe(false)
+  })
+
+  it.each([0.4, 2.1])('rejects the out-of-range page zoom %s', (pageZoom) => {
+    expect(settingsPatchSchema.safeParse({ pageZoom }).success).toBe(false)
   })
 })

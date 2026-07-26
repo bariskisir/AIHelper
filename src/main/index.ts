@@ -12,12 +12,14 @@ import ChatGptService from './services/ChatGptService'
 import CredentialService from './services/CredentialService'
 import LoggerService from './services/LoggerService'
 import StorageService from './services/StorageService'
+import TrayService from './services/TrayService'
 import WindowService from './services/WindowService'
 
 const windowService = new WindowService()
 const applicationPaths = configureApplicationPaths()
 const hasSingleInstanceLock = app.requestSingleInstanceLock()
 let loggerService: LoggerService | null = null
+let trayService: TrayService | null = null
 
 /** Creates all services and binds them to a newly opened window. */
 const openApplicationWindow = async (): Promise<void> => {
@@ -39,12 +41,22 @@ const openApplicationWindow = async (): Promise<void> => {
   const aiProvider = new AiProviderService(chatGpt, logger)
   const updater = new AppUpdater(logger)
   const window = await windowService.createWindow(logger)
+  trayService?.dispose()
+  const tray = new TrayService(window, settings, logger)
+  trayService = tray
+
+  window.on('close', (event) => {
+    if (!tray.shouldMinimizeOnClose()) return
+    event.preventDefault()
+    window.hide()
+  })
 
   registerIpc(window, {
     storage,
     credentials,
     chatGpt,
     aiProvider,
+    tray,
     updater,
     logger,
   })
@@ -118,4 +130,8 @@ if (!hasSingleInstanceLock) {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
+})
+
+app.on('before-quit', () => {
+  trayService?.prepareToQuit()
 })

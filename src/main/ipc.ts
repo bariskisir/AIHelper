@@ -31,6 +31,7 @@ import type CredentialService from './services/CredentialService'
 import { renderSessions } from './services/ExportService'
 import type LoggerService from './services/LoggerService'
 import type StorageService from './services/StorageService'
+import type TrayService from './services/TrayService'
 import { settingsPatchSchema, settingsSchema } from './settingsSchema'
 
 const scanTextSchema = z.object({
@@ -65,6 +66,7 @@ interface IpcServices {
   credentials: CredentialService
   chatGpt: ChatGptService
   aiProvider: AiProviderService
+  tray: TrayService
   updater: AppUpdater
   logger: LoggerService
 }
@@ -92,6 +94,8 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
   }
 
   services.updater.initialize((event: UpdateStateEvent) => send(IpcChannel.UpdateState, event))
+  window.on('maximize', () => send(IpcChannel.WindowMaximizedChanged, true))
+  window.on('unmaximize', () => send(IpcChannel.WindowMaximizedChanged, false))
 
   ipcMain.handle(IpcChannel.AppBootstrap, async (event) => {
     assertSender(event.sender)
@@ -99,6 +103,7 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
       services.storage.loadSettings(),
       Promise.resolve(services.chatGpt.getState()),
     ])
+    window.webContents.setZoomFactor(settings.pageZoom)
     let sessions = await services.storage.listSessions()
     if (sessions.length === 0) {
       await services.storage.createSession()
@@ -123,6 +128,8 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
     const patch = settingsPatchSchema.parse(input) as AppSettingsPatch
     const saved = await services.storage.updateSettings(patch)
     window.setAlwaysOnTop(saved.alwaysOnTop)
+    window.webContents.setZoomFactor(saved.pageZoom)
+    services.tray.applySettings(saved)
     services.logger.setLevel(saved.logLevel)
     return saved
   })
@@ -703,14 +710,37 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
     if (typeof enabled !== 'boolean') throw new Error('Invalid window preference.')
     window.setAlwaysOnTop(enabled)
   })
+  ipcMain.handle(IpcChannel.WindowMinimize, (event) => {
+    assertSender(event.sender)
+    window.minimize()
+  })
+  ipcMain.handle(IpcChannel.WindowToggleMaximize, (event) => {
+    assertSender(event.sender)
+    if (window.isMaximized()) {
+      window.unmaximize()
+      return false
+    }
+    window.maximize()
+    return true
+  })
+  ipcMain.handle(IpcChannel.WindowClose, (event) => {
+    assertSender(event.sender)
+    window.close()
+  })
+  ipcMain.handle(IpcChannel.WindowIsMaximized, (event) => {
+    assertSender(event.sender)
+    return window.isMaximized()
+  })
   ipcMain.handle(IpcChannel.ThemeSet, (event, theme: unknown) => {
     assertSender(event.sender)
     if (theme !== 'light' && theme !== 'dark') throw new Error('Invalid theme.')
-    window.setTitleBarOverlay({
-      color: theme === 'dark' ? '#1f1f1f' : '#f4f4f4',
-      symbolColor: theme === 'dark' ? '#ffffff99' : '#00000099',
-      height: 42,
-    })
+    if (process.platform === 'darwin') {
+      window.setTitleBarOverlay({
+        color: theme === 'dark' ? '#1f1f1f' : '#f4f4f4',
+        symbolColor: theme === 'dark' ? '#ffffff99' : '#00000099',
+        height: 42,
+      })
+    }
   })
   ipcMain.handle(IpcChannel.ShellOpenExternal, async (event, input: unknown) => {
     assertSender(event.sender)
