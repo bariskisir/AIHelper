@@ -59,7 +59,8 @@ export default {
   settings: {
     title: 'Einstellungen',
     general: 'Allgemein',
-    provider: 'Anbieter',
+    provider: 'AI',
+    aiService: 'KI-Dienst',
     prompts: 'System-Prompts',
     updates: 'Updates',
     about: 'Über',

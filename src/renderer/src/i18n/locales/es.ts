@@ -52,7 +52,8 @@ export default {
   settings: {
     title: 'Ajustes',
     general: 'General',
-    provider: 'Proveedores',
+    provider: 'AI',
+    aiService: 'Servicio de IA',
     prompts: 'Prompts del sistema',
     updates: 'Actualizaciones',
     about: 'Acerca de',
@@ -78,7 +79,7 @@ export default {
     logFiles: 'Archivos de registro',
     logFilesDescription: 'Abrir la carpeta que contiene los archivos de registro.',
     openLogs: 'Abrir',
-    aiProvider: 'Proveedores',
+    aiProvider: 'Proveedor',
     aiProviderDescription: 'Seleccionar el proveedor de IA para los escaneos.',
     addSystemPrompt: 'Añadir prompt',
     promptName: 'Nombre del prompt',

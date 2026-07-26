@@ -52,7 +52,8 @@ export default {
   settings: {
     title: '设置',
     general: '通用',
-    provider: '服务商',
+    provider: 'AI',
+    aiService: 'AI 服务',
     prompts: '系统提示词',
     updates: '检查更新',
     about: '关于',
@@ -78,7 +79,7 @@ export default {
     logFiles: '日志文件',
     logFilesDescription: '打开包含应用程序日志文件的文件夹。',
     openLogs: '打开',
-    aiProvider: '服务商',
+    aiProvider: '服务提供商',
     aiProviderDescription: '选择用于扫描的 AI 服务提供商。',
     addSystemPrompt: '添加提示词',
     promptName: '提示词名称',

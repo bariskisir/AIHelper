@@ -44,7 +44,11 @@ export default {
   settings: {
     title: 'Settings',
     general: 'General',
-    provider: 'Providers',
+    provider: 'AI',
+    aiService: 'AI service',
+    aiProvider: 'Provider',
+    aiProviderDescription: 'Choose the AI service provider used for scans.',
+    providers: { chatgpt: 'ChatGPT' },
     prompts: 'System Prompts',
     updates: 'Updates',
     about: 'About',

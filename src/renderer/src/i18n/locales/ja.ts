@@ -55,7 +55,8 @@ export default {
   settings: {
     title: '設定',
     general: '一般',
-    provider: 'プロバイダー',
+    provider: 'AI',
+    aiService: 'AIサービス',
     prompts: 'システムプロンプト',
     updates: 'アップデート',
     about: 'について',

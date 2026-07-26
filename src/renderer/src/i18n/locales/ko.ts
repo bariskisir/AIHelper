@@ -52,7 +52,8 @@ export default {
   settings: {
     title: '설정',
     general: '일반',
-    provider: '제공자',
+    provider: 'AI',
+    aiService: 'AI 서비스',
     prompts: '시스템 프롬프트',
     updates: '업데이트',
     about: '정보',

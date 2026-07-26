@@ -52,7 +52,8 @@ export default {
   settings: {
     title: 'Ayarlar',
     general: 'Genel',
-    provider: 'Sağlayıcılar',
+    provider: 'AI',
+    aiService: 'Yapay zekâ hizmeti',
     prompts: 'Sistem Promptları',
     updates: 'Güncellemeler',
     about: 'Hakkında',
@@ -78,7 +79,7 @@ export default {
     logFiles: 'Günlük dosyaları',
     logFilesDescription: 'Uygulama günlük dosyalarını içeren klasörü açın.',
     openLogs: 'Aç',
-    aiProvider: 'Sağlayıcılar',
+    aiProvider: 'Sağlayıcı',
     aiProviderDescription: 'Taramalar için AI hizmet sağlayıcısını seçin.',
     addSystemPrompt: 'Prompt Ekle',
     promptName: 'Prompt adı',

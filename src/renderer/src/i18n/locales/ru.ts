@@ -55,7 +55,8 @@ export default {
   settings: {
     title: 'Настройки',
     general: 'Общие',
-    provider: 'Провайдеры',
+    provider: 'AI',
+    aiService: 'Сервис ИИ',
     prompts: 'Системные промпты',
     updates: 'Обновления',
     about: 'О приложении',
@@ -81,7 +82,7 @@ export default {
     logFiles: 'Файлы журналов',
     logFilesDescription: 'Открыть папку с файлами журналов приложения.',
     openLogs: 'Открыть',
-    aiProvider: 'Провайдеры',
+    aiProvider: 'Провайдер',
     aiProviderDescription: 'Выберите поставщика ИИ для сканирования.',
     addSystemPrompt: 'Добавить промпт',
     promptName: 'Название промпта',

@@ -55,7 +55,8 @@ export default {
   settings: {
     title: 'Paramètres',
     general: 'Général',
-    provider: 'Fournisseurs',
+    provider: 'AI',
+    aiService: 'Service d’IA',
     prompts: 'Prompts système',
     updates: 'Mises à jour',
     about: 'À propos',
@@ -81,7 +82,7 @@ export default {
     logFiles: 'Fichiers journaux',
     logFilesDescription: 'Ouvrir le dossier contenant les fichiers journaux.',
     openLogs: 'Ouvrir',
-    aiProvider: 'Fournisseurs',
+    aiProvider: 'Fournisseur',
     aiProviderDescription: 'Sélectionner le fournisseur de service IA pour les scans.',
     addSystemPrompt: 'Ajouter un prompt',
     promptName: 'Nom du prompt',

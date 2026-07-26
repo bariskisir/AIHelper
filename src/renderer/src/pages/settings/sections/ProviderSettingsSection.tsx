@@ -1,5 +1,5 @@
 /**
- * Renders ChatGPT account and model configuration.
+ * Renders AI provider selection plus ChatGPT account and model configuration.
  */
 
 import { useTheme } from '@renderer/context/ThemeProvider'
@@ -157,6 +157,23 @@ const ProviderSettingsSection = (): React.JSX.Element => {
 
   return (
     <div className={styles.settingContainer}>
+      <h2 className={styles.groupTitle}>{t('settings.aiService')}</h2>
+      <section className={styles.settingGroup}>
+        <div className={styles.settingRow}>
+          <SettingLabel
+            title={t('settings.aiProvider')}
+            description={t('settings.aiProviderDescription')}
+          />
+          <div className={styles.settingControl}>
+            <Select
+              className={styles.wideControl ?? ''}
+              value="chatgpt"
+              options={[{ value: 'chatgpt', label: t('settings.providers.chatgpt') }]}
+            />
+          </div>
+        </div>
+      </section>
+
       <h2 className={styles.groupTitle}>ChatGPT</h2>
       <section className={styles.settingGroup}>
         <div className={styles.settingRow}>
