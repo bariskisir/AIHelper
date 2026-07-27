@@ -104,6 +104,10 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
       Promise.resolve(services.chatGpt.getState()),
     ])
     window.webContents.setZoomFactor(settings.pageZoom)
+    if (process.platform === 'linux') {
+      settings.showTrayIcon = false
+      settings.minimizeToTrayOnClose = false
+    }
     let sessions = await services.storage.listSessions()
     if (sessions.length === 0) {
       await services.storage.createSession()
@@ -126,6 +130,10 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
   ipcMain.handle(IpcChannel.SettingsSave, async (event, input: unknown) => {
     assertSender(event.sender)
     const patch = settingsPatchSchema.parse(input) as AppSettingsPatch
+    if (process.platform === 'linux') {
+      delete patch.showTrayIcon
+      delete patch.minimizeToTrayOnClose
+    }
     const saved = await services.storage.updateSettings(patch)
     window.setAlwaysOnTop(saved.alwaysOnTop)
     window.webContents.setZoomFactor(saved.pageZoom)

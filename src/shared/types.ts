@@ -229,6 +229,7 @@ export interface UpdateStateEvent {
   percent?: number
   releaseNotes?: string
   message?: string
+  pageUrl?: string
 }
 
 /** Log entry sent from the renderer process to the main process logger. */
