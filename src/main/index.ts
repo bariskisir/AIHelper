@@ -15,8 +15,8 @@ import StorageService from './services/StorageService'
 import TrayService from './services/TrayService'
 import WindowService from './services/WindowService'
 
-const windowService = new WindowService()
 const applicationPaths = configureApplicationPaths()
+const windowService = new WindowService(applicationPaths.dataRoot)
 const hasSingleInstanceLock = app.requestSingleInstanceLock()
 let loggerService: LoggerService | null = null
 let trayService: TrayService | null = null
