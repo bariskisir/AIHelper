@@ -1,9 +1,24 @@
-﻿# AIHelper
+﻿<p align="center">
+  <img src="build/icon.png" alt="AIHelper logo" width="88">
+</p>
 
-AIHelper is an Electron desktop application that provides AI-powered text and image analysis using ChatGPT.
+<h1 align="center">AIHelper</h1>
 
-![AIHelper interface](images/interface.png)
-![AIHelper interface](images/interface2.png)
+<p align="center">
+  AI-powered text and image analysis with ChatGPT.
+</p>
+
+<p align="center">
+  <a href="https://github.com/bariskisir/AIHelper/actions/workflows/release.yml"><img src="https://github.com/bariskisir/AIHelper/actions/workflows/release.yml/badge.svg" alt="CI status"></a>
+  <a href="https://github.com/bariskisir/AIHelper/releases/latest"><img src="https://img.shields.io/github/v/release/bariskisir/AIHelper" alt="Latest release"></a>
+  <a href="https://github.com/bariskisir/AIHelper/releases"><img src="https://img.shields.io/github/downloads/bariskisir/AIHelper/total" alt="Total downloads"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
+</p>
+
+<p align="center">
+  <img src="images/interface.png" alt="AIHelper interface" width="840">
+  <img src="images/interface2.png" alt="AIHelper interface" width="840">
+</p>
 
 ---
 
