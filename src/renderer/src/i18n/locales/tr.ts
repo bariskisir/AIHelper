@@ -82,6 +82,7 @@ export default {
     aiService: 'Yapay zekâ hizmeti',
     prompts: 'Sistem Promptları',
     updates: 'Güncellemeler',
+    telemetry: 'Telemetri',
     about: 'Hakkında',
     alwaysOnTop: 'Her zaman üstte',
     alwaysOnTopDescription: 'Uygulamayı diğer pencerelerin üstünde tutar.',
@@ -173,6 +174,9 @@ export default {
     updateError: 'Güncelleme denetimi başarısız.',
     downloading: 'Güncelleme indiriliyor... %{{percent}}',
     releaseNotes: 'Sürüm notları',
+    telemetryCollection: 'Anonim kullanım telemetrisini paylaş',
+    telemetryDescription:
+      'Etkin kullanıcı sayısını takip etmek için uygulama açılışında anonim bir kurulum kimliği, sürüm, platform ve arayüz dili gönderilir. Microsoft bağlantı IP adresinden yaklaşık ülke ve şehir bilgisini türetir. Tarama içeriği gönderilmez.',
   },
   themes: { system: 'Sistem', light: 'Açık', dark: 'Koyu' },
   locales: {

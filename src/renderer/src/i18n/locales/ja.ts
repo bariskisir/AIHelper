@@ -85,6 +85,7 @@ export default {
     aiService: 'AIサービス',
     prompts: 'システムプロンプト',
     updates: 'アップデート',
+    telemetry: 'テレメトリ',
     about: 'について',
     alwaysOnTop: '常に最前面に表示',
     alwaysOnTopDescription: '他のウィンドウより前面にアプリを表示します。',
@@ -175,6 +176,9 @@ export default {
     updateError: 'アップデート確認に失敗しました。',
     downloading: 'アップデートをダウンロード中... {{percent}}%',
     releaseNotes: 'リリースノート',
+    telemetryCollection: '匿名の利用状況テレメトリを共有',
+    telemetryDescription:
+      'アクティブユーザー数を把握するため、アプリケーションの起動時に匿名のインストールID、バージョン、プラットフォーム、インターフェース言語を送信します。Microsoft は接続元IPからおおよその国と都市を推定します。スキャン内容は送信されません。',
   },
   themes: {
     system: 'システム',

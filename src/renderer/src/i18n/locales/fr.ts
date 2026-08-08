@@ -85,6 +85,7 @@ export default {
     aiService: 'Service d’IA',
     prompts: 'Prompts système',
     updates: 'Mises à jour',
+    telemetry: 'Télémétrie',
     about: 'À propos',
     alwaysOnTop: 'Toujours au premier plan',
     alwaysOnTopDescription: "Garder l'application au-dessus des autres fenêtres.",
@@ -176,6 +177,9 @@ export default {
     updateError: 'Échec de la vérification des mises à jour.',
     downloading: 'Téléchargement de la mise à jour... {{percent}}%',
     releaseNotes: 'Notes de version',
+    telemetryCollection: "Partager les données d'utilisation anonymes",
+    telemetryDescription:
+      "Au démarrage de l'application, un identifiant d'installation anonyme, la version, la plateforme et la langue de l'interface sont envoyés pour compter les utilisateurs actifs. Microsoft déduit un pays et une ville approximatifs de l'adresse IP de connexion. Aucun contenu analysé n'est envoyé.",
   },
   themes: {
     system: 'Système',

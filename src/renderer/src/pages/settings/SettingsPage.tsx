@@ -4,7 +4,16 @@
 
 import { useAppDispatch, useAppSelector } from '@renderer/store'
 import { type SettingsSection, setSettingsSection } from '@renderer/store/appSlice'
-import { Cpu, Info, Monitor, RefreshCw, ScrollText, Settings2, Sliders } from 'lucide-react'
+import {
+  Cpu,
+  Activity,
+  Info,
+  Monitor,
+  RefreshCw,
+  ScrollText,
+  Settings2,
+  Sliders,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import styles from './SettingsPage.module.scss'
 import AboutSettingsSection from './sections/AboutSettingsSection'
@@ -13,6 +22,7 @@ import DisplaySettingsSection from './sections/DisplaySettingsSection'
 import LoggingSettingsSection from './sections/LoggingSettingsSection'
 import ProviderSettingsSection from './sections/ProviderSettingsSection'
 import SystemPromptsSettingsSection from './sections/SystemPromptsSettingsSection'
+import TelemetrySettingsSection from './sections/TelemetrySettingsSection'
 import UpdatesSettingsSection from './sections/UpdatesSettingsSection'
 
 /** Renders category navigation and the selected settings section. */
@@ -43,6 +53,11 @@ const SettingsPage = (): React.JSX.Element => {
       icon: <RefreshCw size={17} />,
     },
     {
+      key: 'telemetry',
+      label: t('settings.telemetry'),
+      icon: <Activity size={17} />,
+    },
+    {
       key: 'logging',
       label: t('settings.logging'),
       icon: <ScrollText size={17} />,
@@ -56,6 +71,7 @@ const SettingsPage = (): React.JSX.Element => {
     if (section === 'provider') return <ProviderSettingsSection />
     if (section === 'prompts') return <SystemPromptsSettingsSection />
     if (section === 'updates') return <UpdatesSettingsSection />
+    if (section === 'telemetry') return <TelemetrySettingsSection />
     if (section === 'logging') return <LoggingSettingsSection />
     if (section === 'about') return <AboutSettingsSection />
     return <GeneralSettingsSection />

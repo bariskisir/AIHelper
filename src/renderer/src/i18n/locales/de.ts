@@ -89,6 +89,7 @@ export default {
     aiService: 'KI-Dienst',
     prompts: 'System-Prompts',
     updates: 'Updates',
+    telemetry: 'Telemetrie',
     about: 'Über',
     alwaysOnTop: 'Immer im Vordergrund',
     alwaysOnTopDescription: 'Anwendung über anderen Fenstern halten.',
@@ -180,6 +181,9 @@ export default {
     updateError: 'Update-Prüfung fehlgeschlagen.',
     downloading: 'Update wird heruntergeladen... {{percent}}%',
     releaseNotes: 'Versionshinweise',
+    telemetryCollection: 'Anonyme Nutzungstelemetrie teilen',
+    telemetryDescription:
+      'Beim Start der Anwendung werden eine anonyme Installations-ID, Version, Plattform und Oberflächensprache gesendet, um aktive Nutzer zu zählen. Microsoft leitet aus der Verbindungs-IP ein ungefähres Land und eine Stadt ab. Scaninhalte werden nicht gesendet.',
   },
   themes: {
     system: 'System',

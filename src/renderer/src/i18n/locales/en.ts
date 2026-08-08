@@ -77,6 +77,7 @@ export default {
     providers: { chatgpt: 'ChatGPT' },
     prompts: 'System Prompts',
     updates: 'Updates',
+    telemetry: 'Telemetry',
     about: 'About',
     alwaysOnTop: 'Always on top',
     interfaceLanguage: 'Interface language',
@@ -136,6 +137,9 @@ export default {
     updateError: 'Update check failed.',
     downloading: 'Downloading update... {{percent}}%',
     releaseNotes: 'Release notes',
+    telemetryCollection: 'Share anonymous usage telemetry',
+    telemetryDescription:
+      'At application startup, an anonymous installation ID, version, platform, and interface locale are sent to count active users. Microsoft derives an approximate country and city from the connection IP. No scan content is sent.',
   },
   themes: { system: 'System', light: 'Light', dark: 'Dark' },
   locales: {

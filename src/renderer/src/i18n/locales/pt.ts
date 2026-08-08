@@ -85,6 +85,7 @@ export default {
     aiService: 'Serviço de IA',
     prompts: 'Prompts do sistema',
     updates: 'Atualizações',
+    telemetry: 'Telemetria',
     about: 'Sobre',
     alwaysOnTop: 'Sempre no topo',
     alwaysOnTopDescription: 'Manter o aplicativo acima de outras janelas.',
@@ -176,6 +177,9 @@ export default {
     updateError: 'Falha ao verificar atualizações.',
     downloading: 'Baixando atualização... {{percent}}%',
     releaseNotes: 'Notas de versão',
+    telemetryCollection: 'Partilhar telemetria de utilização anónima',
+    telemetryDescription:
+      'Ao iniciar a aplicação, são enviados um identificador de instalação anónimo, a versão, a plataforma e o idioma da interface para contar utilizadores ativos. A Microsoft obtém um país e uma cidade aproximados a partir do IP da ligação. Não são enviados conteúdos analisados.',
   },
   themes: {
     system: 'Sistema',

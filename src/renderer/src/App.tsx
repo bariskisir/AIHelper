@@ -13,6 +13,7 @@ import { Button, Spin } from 'antd'
 import { Download } from 'lucide-react'
 import { lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
+import logoUrl from '../../../build/icon.svg'
 import styles from './App.module.scss'
 
 const SettingsPage = lazy(() => import('@renderer/pages/settings/SettingsPage'))
@@ -34,7 +35,7 @@ const App = (): React.JSX.Element => {
   if (!initialized) {
     return (
       <div className={styles.loadingScreen}>
-        <Spin size="small" />
+        <img className={styles.loadingLogo} src={logoUrl} alt="" />
         <span>{t('common.loading')}</span>
       </div>
     )

@@ -81,6 +81,7 @@ export default {
     aiService: 'AI 服务',
     prompts: '系统提示词',
     updates: '检查更新',
+    telemetry: '遥测',
     about: '关于',
     alwaysOnTop: '窗口置顶',
     alwaysOnTopDescription: '保持应用程序置顶在其他窗口之上。',
@@ -170,6 +171,9 @@ export default {
     updateError: '检查更新失败。',
     downloading: '正在下载更新... {{percent}}%',
     releaseNotes: '发布说明',
+    telemetryCollection: '共享匿名使用情况遥测',
+    telemetryDescription:
+      '应用启动时会发送匿名安装标识、版本、平台和界面语言，用于统计活跃用户。Microsoft 会根据连接 IP 推断大致的国家/地区和城市。不会发送扫描内容。',
   },
   themes: { system: '系统', light: '浅色', dark: '深色' },
   locales: {
