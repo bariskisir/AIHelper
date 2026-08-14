@@ -15,7 +15,15 @@ import {
 
 export type AppPage = 'home' | 'settings'
 export type SettingsSection =
-  'general' | 'display' | 'provider' | 'prompts' | 'updates' | 'telemetry' | 'about' | 'logging'
+  | 'general'
+  | 'display'
+  | 'tray'
+  | 'provider'
+  | 'prompts'
+  | 'updates'
+  | 'telemetry'
+  | 'about'
+  | 'logging'
 
 export interface AppState {
   initialized: boolean

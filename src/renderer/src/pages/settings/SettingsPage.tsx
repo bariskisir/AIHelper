@@ -8,6 +8,7 @@ import {
   Cpu,
   Activity,
   Info,
+  Inbox,
   Monitor,
   RefreshCw,
   ScrollText,
@@ -23,6 +24,7 @@ import LoggingSettingsSection from './sections/LoggingSettingsSection'
 import ProviderSettingsSection from './sections/ProviderSettingsSection'
 import SystemPromptsSettingsSection from './sections/SystemPromptsSettingsSection'
 import TelemetrySettingsSection from './sections/TelemetrySettingsSection'
+import TraySettingsSection from './sections/TraySettingsSection'
 import UpdatesSettingsSection from './sections/UpdatesSettingsSection'
 
 /** Renders category navigation and the selected settings section. */
@@ -41,6 +43,7 @@ const SettingsPage = (): React.JSX.Element => {
       icon: <Settings2 size={17} />,
     },
     { key: 'display', label: t('settings.display'), icon: <Monitor size={17} /> },
+    { key: 'tray', label: t('settings.tray'), icon: <Inbox size={17} /> },
     { key: 'provider', label: t('settings.provider'), icon: <Cpu size={17} /> },
     {
       key: 'prompts',
@@ -68,6 +71,7 @@ const SettingsPage = (): React.JSX.Element => {
   /** Resolves the active category component without keeping inactive forms mounted. */
   const renderSection = (): React.JSX.Element => {
     if (section === 'display') return <DisplaySettingsSection />
+    if (section === 'tray') return <TraySettingsSection />
     if (section === 'provider') return <ProviderSettingsSection />
     if (section === 'prompts') return <SystemPromptsSettingsSection />
     if (section === 'updates') return <UpdatesSettingsSection />

@@ -73,12 +73,16 @@ export default {
     zoomIn: 'Agrandir',
     resetZoom: 'Réinitialiser le zoom',
     traySettings: 'Paramètres de la zone de notification',
+    tray: 'Zone de notification',
     trayUnavailable: 'Windows only',
     showTrayIcon: "Afficher l'icône dans la zone de notification",
     showTrayIconDescription: 'Afficher AI Helper dans la zone de notification.',
     minimizeToTrayOnClose: 'Réduire dans la zone de notification à la fermeture',
     minimizeToTrayOnCloseDescription:
       "Masquez la fenêtre dans la zone de notification au lieu de quitter l'application.",
+    startMinimized: 'Démarrer réduit',
+    startMinimizedDescription:
+      "Démarrez l'application cachée dans la zone de notification au lieu d'afficher sa fenêtre.",
     title: 'Paramètres',
     general: 'Général',
     provider: 'AI',

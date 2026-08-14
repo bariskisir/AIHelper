@@ -55,8 +55,9 @@ describe('parsePersistedSettings', () => {
     expect(result.settingsRevision).toBe(1)
     expect(result.navbarPosition).toBe('top')
     expect(result.pageZoom).toBe(1)
-    expect(result.showTrayIcon).toBe(true)
-    expect(result.minimizeToTrayOnClose).toBe(true)
+    expect(result.showTrayIcon).toBe(false)
+    expect(result.minimizeToTrayOnClose).toBe(false)
+    expect(result.startMinimized).toBe(false)
   })
 
   // -- valid partial settings -----------------------------------------------
@@ -243,6 +244,24 @@ describe('settingsSchema', () => {
     })
     expect(result.success).toBe(false)
   })
+
+  it('rejects minimized startup when the tray icon is disabled', () => {
+    const result = settingsSchema.safeParse({
+      ...DEFAULT_SETTINGS,
+      showTrayIcon: false,
+      startMinimized: true,
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('accepts minimized startup when the tray icon is enabled', () => {
+    const result = settingsSchema.safeParse({
+      ...DEFAULT_SETTINGS,
+      showTrayIcon: true,
+      startMinimized: true,
+    })
+    expect(result.success).toBe(true)
+  })
 })
 
 describe('settingsPatchSchema', () => {
@@ -253,6 +272,11 @@ describe('settingsPatchSchema', () => {
       showTrayIcon: true,
       minimizeToTrayOnClose: true,
     })
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts a minimized startup change', () => {
+    const result = settingsPatchSchema.safeParse({ startMinimized: true })
     expect(result.success).toBe(true)
   })
 

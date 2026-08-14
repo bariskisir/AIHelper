@@ -107,6 +107,7 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
     if (process.platform === 'linux') {
       settings.showTrayIcon = false
       settings.minimizeToTrayOnClose = false
+      settings.startMinimized = false
     }
     let sessions = await services.storage.listSessions()
     if (sessions.length === 0) {
@@ -133,6 +134,7 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
     if (process.platform === 'linux') {
       delete patch.showTrayIcon
       delete patch.minimizeToTrayOnClose
+      delete patch.startMinimized
     }
     const saved = await services.storage.updateSettings(patch)
     window.setAlwaysOnTop(saved.alwaysOnTop)

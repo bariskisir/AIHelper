@@ -53,7 +53,10 @@ const openApplicationWindow = async (): Promise<void> => {
   await chatGpt.initialize()
   const aiProvider = new AiProviderService(chatGpt, logger)
   const updater = new AppUpdater(logger)
-  const window = await windowService.createWindow(logger)
+  const window = await windowService.createWindow(
+    logger,
+    settings.showTrayIcon && settings.startMinimized,
+  )
   trayService?.dispose()
   const tray = new TrayService(window, settings, logger)
   trayService = tray
@@ -122,8 +125,8 @@ if (!hasSingleInstanceLock) {
   app.on('second-instance', () => {
     const window = windowService.getMainWindow()
     if (!window) return
-    if (window.isMinimized()) window.restore()
     window.show()
+    if (window.isMinimized()) window.restore()
     window.focus()
   })
   void app

@@ -73,12 +73,16 @@ export default {
     zoomIn: '拡大',
     resetZoom: 'ズームをリセット',
     traySettings: 'システムトレイ設定',
+    tray: 'トレイ',
     trayUnavailable: 'Windows only',
     showTrayIcon: 'トレイアイコンを表示',
     showTrayIconDescription: 'システムトレイに AI Helper を表示します。',
     minimizeToTrayOnClose: '閉じるときにトレイへ最小化',
     minimizeToTrayOnCloseDescription:
       'ウィンドウを閉じたとき、終了せずにシステムトレイへ隠します。',
+    startMinimized: '最小化して起動',
+    startMinimizedDescription:
+      'ウィンドウを表示せず、システムトレイに隠してアプリケーションを起動します。',
     title: '設定',
     general: '一般',
     provider: 'AI',

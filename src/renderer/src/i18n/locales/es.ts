@@ -70,12 +70,16 @@ export default {
     zoomIn: 'Acercar',
     resetZoom: 'Restablecer zoom',
     traySettings: 'Configuración de la bandeja',
+    tray: 'Área de notificación',
     trayUnavailable: 'Windows only',
     showTrayIcon: 'Mostrar icono en la bandeja',
     showTrayIconDescription: 'Muestra AI Helper en la bandeja del sistema.',
     minimizeToTrayOnClose: 'Minimizar a la bandeja al cerrar',
     minimizeToTrayOnCloseDescription:
       'Oculta la ventana en la bandeja del sistema en lugar de salir al cerrarla.',
+    startMinimized: 'Iniciar minimizado',
+    startMinimizedDescription:
+      'Inicia la aplicación oculta en el área de notificación en lugar de mostrar su ventana.',
     title: 'Ajustes',
     general: 'General',
     provider: 'AI',

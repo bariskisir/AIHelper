@@ -80,6 +80,8 @@ AIHelper/
 │           │       │   └── SettingLabel.tsx
 │           │       └── sections/
 │           │           ├── GeneralSettingsSection.tsx    # Language, theme, time format, compact mode, always-on-top
+│           │           ├── DisplaySettingsSection.tsx    # Theme, navbar position, page zoom
+│           │           ├── TraySettingsSection.tsx       # Tray icon, minimize-to-tray, start minimized
 │           │           ├── ProviderSettingsSection.tsx   # ChatGPT sign-in, model selection, thinking, verbosity
 │           │           ├── SystemPromptsSettingsSection.tsx  # Custom system prompt CRUD
 │           │           ├── UpdatesSettingsSection.tsx    # Auto-update toggle, manual check, install

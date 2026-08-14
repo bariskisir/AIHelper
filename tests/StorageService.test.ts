@@ -116,8 +116,9 @@ describe('StorageService', () => {
       expect(settings).toEqual(DEFAULT_SETTINGS)
       expect(settings.navbarPosition).toBe('top')
       expect(settings.pageZoom).toBe(1)
-      expect(settings.showTrayIcon).toBe(true)
-      expect(settings.minimizeToTrayOnClose).toBe(true)
+      expect(settings.showTrayIcon).toBe(false)
+      expect(settings.minimizeToTrayOnClose).toBe(false)
+      expect(settings.startMinimized).toBe(false)
     })
 
     it('saves and reloads display and tray settings', async () => {

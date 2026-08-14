@@ -70,12 +70,16 @@ export default {
     zoomIn: 'Yakınlaştır',
     resetZoom: 'Ölçeği sıfırla',
     traySettings: 'Tepsi Ayarları',
+    tray: 'Sistem Tepsisi',
     trayUnavailable: 'Yalnızca Windows',
     showTrayIcon: 'Tepsi simgesini göster',
     showTrayIconDescription: "AI Helper'i sistem tepsisinde göster.",
     minimizeToTrayOnClose: 'Kapatınca tepsiye küçült',
     minimizeToTrayOnCloseDescription:
       'Pencere kapatıldığında uygulamadan çıkmak yerine sistem tepsisine gizle.',
+    startMinimized: 'Küçültülmüş başlat',
+    startMinimizedDescription:
+      'Uygulamayı pencereyi göstermek yerine sistem tepsisinde gizli olarak başlatın.',
     title: 'Ayarlar',
     general: 'Genel',
     provider: 'AI',
