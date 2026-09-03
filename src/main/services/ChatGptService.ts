@@ -27,6 +27,10 @@ const CODEX_LATEST_URL = 'https://registry.npmjs.org/@openai/codex/latest'
 const DEFAULT_CODEX_CLIENT_VERSION = '0.145.0'
 const OAUTH_REDIRECT_URL = 'http://localhost:1455/auth/callback'
 const OAUTH_TIMEOUT_MS = 3 * 60 * 1_000
+const TOKEN_REFRESH_BUFFER_MS = 60_000
+const TOKEN_PROACTIVE_REFRESH_MS = 24 * 60 * 60 * 1_000
+const TOKEN_REFRESH_MAX_ATTEMPTS = 2
+const TOKEN_REFRESH_RETRY_DELAY_MS = 1_000
 
 interface ChatGptServiceEvents {
   onState: (state: ChatGptState) => void
@@ -60,9 +64,28 @@ export default class ChatGptService {
       status: 'signed-in',
       accountEmail: auth.accountEmail,
     }
-    void this.refresh().catch((error: unknown) => {
-      this.logger.warn('ChatGPT', 'ChatGPT metadata refresh failed during startup.', error)
-    })
+    if (auth.expiresAt < Date.now() + TOKEN_PROACTIVE_REFRESH_MS) {
+      void this.getValidAuth({ force: true })
+        .then(() => this.refresh())
+        .catch((error: unknown) => {
+          this.logger.warn(
+            'ChatGPT',
+            'ChatGPT token proactive refresh failed during startup.',
+            error,
+          )
+          void this.refresh().catch((refreshError: unknown) => {
+            this.logger.warn(
+              'ChatGPT',
+              'ChatGPT metadata refresh failed during startup.',
+              refreshError,
+            )
+          })
+        })
+    } else {
+      void this.refresh().catch((error: unknown) => {
+        this.logger.warn('ChatGPT', 'ChatGPT metadata refresh failed during startup.', error)
+      })
+    }
   }
 
   /** Returns a copy of renderer-safe authentication and model state. */
@@ -127,7 +150,13 @@ export default class ChatGptService {
 
   /** Refreshes models and usage metadata. */
   public async refresh(): Promise<ChatGptState> {
-    const auth = await this.credentials.getChatGptAuth()
+    let auth: ChatGptAuthTokens | null
+    try {
+      auth = await this.getValidAuth()
+    } catch {
+      this.updateState({ status: 'signed-out' })
+      return this.getState()
+    }
     if (!auth) {
       this.updateState({ status: 'signed-out' })
       return this.getState()
@@ -139,13 +168,12 @@ export default class ChatGptService {
 
   /** Resolves current access token, refreshing when expired. */
   public async resolveAccessToken(): Promise<string | null> {
-    let auth = await this.credentials.getChatGptAuth()
-    if (!auth) return null
-    if (Date.now() > auth.expiresAt - 60_000) {
-      auth = await this.refreshAccessToken(auth)
-      if (!auth) return null
+    try {
+      const auth = await this.getValidAuth()
+      return auth ? auth.accessToken : null
+    } catch {
+      return null
     }
-    return auth.accessToken
   }
 
   /** Streams a scan response for text or image input. */
@@ -160,14 +188,8 @@ export default class ChatGptService {
     onDelta: (delta: string) => void,
     signal: AbortSignal,
   ): Promise<string> {
-    const auth = await this.credentials.getChatGptAuth()
+    let auth = await this.getValidAuth()
     if (!auth) throw new Error('Not signed in to ChatGPT.')
-    let accessToken = auth.accessToken
-    if (Date.now() > auth.expiresAt - 60_000) {
-      const refreshed = await this.refreshAccessToken(auth)
-      if (!refreshed) throw new Error('Token refresh failed.')
-      accessToken = refreshed.accessToken
-    }
     const content: Record<string, unknown>[] = [{ type: 'input_text', text: userInput }]
     if (imageBase64) {
       content.push({
@@ -194,22 +216,47 @@ export default class ChatGptService {
     }
     if (serviceTier === 'fast') body.service_tier = 'priority'
 
-    const response = await fetch(CHATGPT_RESPONSES_URL, {
-      method: 'POST',
-      headers: this.createHeaders(accessToken, auth.accountId),
-      body: JSON.stringify(body),
-      signal,
-    })
-    if (!response.ok) {
+    const bodyJson = JSON.stringify(body)
+    let response: Response | null = null
+    for (let attempt = 0; attempt < 2; attempt++) {
+      response = await fetch(CHATGPT_RESPONSES_URL, {
+        method: 'POST',
+        headers: this.createHeaders(auth.accessToken, auth.accountId),
+        body: bodyJson,
+        signal,
+      })
+      if (response.ok) break
+      const isAuthError = response.status === 401 || response.status === 403
+      if (isAuthError && attempt === 0) {
+        this.logger.warn(
+          'ChatGPT',
+          'ChatGPT scan failed with auth error, refreshing token and retrying.',
+          {
+            status: response.status,
+          },
+        )
+        try {
+          const refreshed = await this.getValidAuth({ force: true })
+          if (!refreshed) throw new Error('Token refresh failed.')
+          auth = refreshed
+          continue
+        } catch {
+          let errText = ''
+          try {
+            errText = await response.text()
+          } catch {}
+          this.logger.error('ChatGPT', `ChatGPT API error ${response.status}: ${errText}`)
+          throw new Error(`ChatGPT API error: ${response.status}${errText ? ` - ${errText}` : ''}`)
+        }
+      }
       let errText = ''
       try {
         errText = await response.text()
-      } catch {
-        /* ignore */
-      }
+      } catch {}
       this.logger.error('ChatGPT', `ChatGPT API error ${response.status}: ${errText}`)
       throw new Error(`ChatGPT API error: ${response.status}${errText ? ` - ${errText}` : ''}`)
     }
+    if (!response?.ok) throw new Error('ChatGPT API error')
     return this.readStream(response, onDelta, signal)
   }
 
@@ -271,7 +318,36 @@ export default class ChatGptService {
     }
   }
 
-  /** Refreshes the OAuth access token. */
+  /** Returns a valid auth, refreshing proactively or on force with retry. */
+  private async getValidAuth(options?: { force?: boolean }): Promise<ChatGptAuthTokens | null> {
+    const auth = await this.credentials.getChatGptAuth()
+    if (!auth) return null
+    const needsRefresh = options?.force || auth.expiresAt <= Date.now() + TOKEN_REFRESH_BUFFER_MS
+    if (!needsRefresh) return auth
+    return this.refreshAccessTokenWithRetry(auth)
+  }
+
+  /** Refreshes the OAuth access token with retry on transient failures. */
+  private async refreshAccessTokenWithRetry(
+    auth: ChatGptAuthTokens,
+  ): Promise<ChatGptAuthTokens | null> {
+    let lastError: unknown = null
+    for (let attempt = 0; attempt < TOKEN_REFRESH_MAX_ATTEMPTS; attempt++) {
+      const result = await this.refreshAccessToken(auth)
+      if (result) return result
+      lastError = new Error('Token refresh failed.')
+      if (attempt < TOKEN_REFRESH_MAX_ATTEMPTS - 1) {
+        this.logger.warn('ChatGPT', 'ChatGPT token refresh failed, retrying.', {
+          attempt: attempt + 1,
+        })
+        await this.delay(TOKEN_REFRESH_RETRY_DELAY_MS)
+      }
+    }
+    this.logger.warn('ChatGPT', 'ChatGPT token refresh failed after retries.', lastError)
+    return null
+  }
+
+  /** Refreshes the OAuth access token (single attempt). */
   private async refreshAccessToken(auth: ChatGptAuthTokens): Promise<ChatGptAuthTokens | null> {
     try {
       const response = await fetch(CHATGPT_TOKEN_URL, {
@@ -285,17 +361,26 @@ export default class ChatGptService {
       })
       if (!response.ok) return null
       const payload = (await response.json()) as Record<string, unknown>
+      const accessToken = String(payload.access_token ?? '')
+      const refreshToken = String(payload.refresh_token ?? auth.refreshToken)
+      const expiresIn = Number(payload.expires_in)
+      if (!accessToken || !refreshToken || !Number.isFinite(expiresIn) || expiresIn <= 0)
+        return null
       const tokens: ChatGptAuthTokens = {
         ...auth,
-        accessToken: String(payload.access_token ?? ''),
-        refreshToken: String(payload.refresh_token ?? auth.refreshToken),
-        expiresAt: Date.now() + (Number(payload.expires_in) || 600) * 1_000,
+        accessToken,
+        refreshToken,
+        expiresAt: Date.now() + expiresIn * 1_000,
       }
       await this.credentials.saveChatGptAuth(tokens)
       return tokens
     } catch {
       return null
     }
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms))
   }
 
   /** Starts a temporary HTTP server and returns the OAuth authorization code. */

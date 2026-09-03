@@ -41,7 +41,7 @@ const openApplicationWindow = async (): Promise<void> => {
     .catch((error: unknown) => {
       logger.warn('TelemetryService', 'Startup telemetry could not be sent.', error)
     })
-  const credentials = new CredentialService(join(applicationPaths.dataRoot, 'credentials.bin'))
+  const credentials = new CredentialService(join(applicationPaths.dataRoot, 'credentials.json'))
   const chatGpt = new ChatGptService(
     credentials,
     {

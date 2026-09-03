@@ -1,8 +1,10 @@
 /**
- * Persists API keys and ChatGPT OAuth tokens with Electron's operating-system-backed encryption.
+ * Persists API keys and ChatGPT OAuth tokens as plain JSON.
+ * Legacy encrypted `*.bin` files are migrated automatically on first read.
  */
 
 import { readFile, unlink, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
 import { safeStorage } from 'electron'
 
 export interface ChatGptAuthTokens {
@@ -14,7 +16,19 @@ export interface ChatGptAuthTokens {
 }
 
 export default class CredentialService {
-  /** Creates a credential service for one encrypted file. */
+  private get legacyFilePath(): string {
+    return join(dirname(this.filePath), 'credentials.bin')
+  }
+
+  private chatGptPath(): string {
+    return join(dirname(this.filePath), 'chatgpt_auth.json')
+  }
+
+  private get chatGptLegacyPath(): string {
+    return join(dirname(this.filePath), 'chatgpt_auth.bin')
+  }
+
+  /** Creates a credential service for one vault file (now `credentials.json`). */
   public constructor(private readonly filePath: string) {}
 
   /** Reports whether an encrypted API key is stored. */
@@ -22,81 +36,145 @@ export default class CredentialService {
     return Boolean(await this.getApiKey())
   }
 
-  /** Decrypts the custom provider API key. */
+  /** Reads API key from JSON, migrating legacy encrypted bin if needed. */
   public async getApiKey(): Promise<string | null> {
+    const fromJson = await this.readApiKeyJson()
+    if (fromJson !== null) return fromJson
+    const migrated = await this.tryMigrateLegacyApiKey()
+    return migrated
+  }
+
+  private async readApiKeyJson(): Promise<string | null> {
+    try {
+      const content = await readFile(this.filePath, 'utf8')
+      const parsed: unknown = JSON.parse(content)
+      if (typeof parsed === 'string') return parsed
+      if (parsed && typeof parsed === 'object') {
+        const candidate = parsed as Record<string, unknown>
+        if (typeof candidate.apiKey === 'string') return candidate.apiKey
+        if (typeof candidate.credentials === 'string') return candidate.credentials
+      }
+      return null
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null
+      if (error instanceof SyntaxError) {
+        try {
+          const raw = await readFile(this.filePath, 'utf8')
+          const trimmed = raw.trim()
+          if (trimmed) return trimmed
+        } catch {}
+        return null
+      }
+      return null
+    }
+  }
+
+  private async tryMigrateLegacyApiKey(): Promise<string | null> {
+    if (this.filePath === this.legacyFilePath) return null
     try {
       if (!(await safeStorage.isAsyncEncryptionAvailable())) return null
-      const encrypted = await readFile(this.filePath)
+      const encrypted = await readFile(this.legacyFilePath)
       const decrypted = await safeStorage.decryptStringAsync(encrypted)
-      if (decrypted.shouldReEncrypt) await this.saveApiKey(decrypted.result)
-      return decrypted.result
+      const apiKey = decrypted.result
+      if (!apiKey) return null
+      await this.saveApiKey(apiKey)
+      try {
+        await unlink(this.legacyFilePath)
+      } catch {}
+      return apiKey
     } catch {
       return null
     }
   }
 
-  /** Encrypts and saves an API key. */
+  /** Saves an API key as plain JSON. */
   public async saveApiKey(apiKey: string): Promise<void> {
-    if (!(await safeStorage.isAsyncEncryptionAvailable())) {
-      throw new Error('Secure credential storage is not available on this system.')
-    }
-    const encrypted = await safeStorage.encryptStringAsync(apiKey)
-    await writeFile(this.filePath, encrypted, { mode: 0o600 })
+    await writeFile(this.filePath, JSON.stringify(apiKey), { mode: 0o600 })
   }
 
-  /** Removes the encrypted API key. */
+  /** Removes the API key (both json and legacy bin). */
   public async deleteApiKey(): Promise<void> {
-    try {
-      await unlink(this.filePath)
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+    for (const target of [this.filePath, this.legacyFilePath]) {
+      try {
+        await unlink(target)
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+      }
     }
   }
 
-  /** Reads persisted ChatGPT OAuth tokens from their dedicated file. */
+  /** Reads persisted ChatGPT OAuth tokens from JSON, migrating legacy bin if needed. */
   public async getChatGptAuth(): Promise<ChatGptAuthTokens | null> {
+    const fromJson = await this.readChatGptJson()
+    if (fromJson) return fromJson
+    const migrated = await this.tryMigrateLegacyChatGptAuth()
+    return migrated
+  }
+
+  private async readChatGptJson(): Promise<ChatGptAuthTokens | null> {
     try {
-      if (!(await safeStorage.isAsyncEncryptionAvailable())) return null
-      const encrypted = await readFile(this.chatGptPath())
-      const decrypted = await safeStorage.decryptStringAsync(encrypted)
-      const parsed = JSON.parse(decrypted.result) as ChatGptAuthTokens
+      const content = await readFile(this.chatGptPath(), 'utf8')
+      const parsed: unknown = JSON.parse(content)
+      if (!parsed || typeof parsed !== 'object') return null
+      const candidate = parsed as Record<string, unknown>
       if (
-        typeof parsed.accessToken !== 'string' ||
-        typeof parsed.refreshToken !== 'string' ||
-        typeof parsed.accountId !== 'string' ||
-        typeof parsed.accountEmail !== 'string' ||
-        typeof parsed.expiresAt !== 'number'
+        typeof candidate.accessToken !== 'string' ||
+        typeof candidate.refreshToken !== 'string' ||
+        typeof candidate.accountId !== 'string' ||
+        typeof candidate.accountEmail !== 'string' ||
+        typeof candidate.expiresAt !== 'number'
       ) {
         return null
       }
-      if (decrypted.shouldReEncrypt) await this.saveChatGptAuth(parsed)
-      return parsed
+      return candidate as unknown as ChatGptAuthTokens
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null
+      if (error instanceof SyntaxError) return null
+      return null
+    }
+  }
+
+  private async tryMigrateLegacyChatGptAuth(): Promise<ChatGptAuthTokens | null> {
+    try {
+      if (!(await safeStorage.isAsyncEncryptionAvailable())) return null
+      const encrypted = await readFile(this.chatGptLegacyPath)
+      const decrypted = await safeStorage.decryptStringAsync(encrypted)
+      const parsed: unknown = JSON.parse(decrypted.result)
+      if (!parsed || typeof parsed !== 'object') return null
+      const candidate = parsed as Record<string, unknown>
+      if (
+        typeof candidate.accessToken !== 'string' ||
+        typeof candidate.refreshToken !== 'string' ||
+        typeof candidate.accountId !== 'string' ||
+        typeof candidate.accountEmail !== 'string' ||
+        typeof candidate.expiresAt !== 'number'
+      ) {
+        return null
+      }
+      const tokens = candidate as unknown as ChatGptAuthTokens
+      await this.saveChatGptAuth(tokens)
+      try {
+        await unlink(this.chatGptLegacyPath)
+      } catch {}
+      return tokens
     } catch {
       return null
     }
   }
 
-  /** Encrypts and saves ChatGPT OAuth tokens. */
+  /** Saves ChatGPT OAuth tokens as plain JSON. */
   public async saveChatGptAuth(tokens: ChatGptAuthTokens): Promise<void> {
-    if (!(await safeStorage.isAsyncEncryptionAvailable())) {
-      throw new Error('Secure credential storage is not available on this system.')
-    }
-    const encrypted = await safeStorage.encryptStringAsync(JSON.stringify(tokens))
-    await writeFile(this.chatGptPath(), encrypted, { mode: 0o600 })
+    await writeFile(this.chatGptPath(), JSON.stringify(tokens, null, 2), { mode: 0o600 })
   }
 
-  /** Removes persisted ChatGPT OAuth tokens. */
+  /** Removes persisted ChatGPT OAuth tokens (both json and legacy bin). */
   public async deleteChatGptAuth(): Promise<void> {
-    try {
-      await unlink(this.chatGptPath())
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+    for (const target of [this.chatGptPath(), this.chatGptLegacyPath]) {
+      try {
+        await unlink(target)
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+      }
     }
-  }
-
-  /** Resolves the ChatGPT auth token file path. */
-  private chatGptPath(): string {
-    const dir = this.filePath.replace(/[^/\\]+$/, '')
-    return `${dir}chatgpt_auth.bin`
   }
 }
