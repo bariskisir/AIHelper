@@ -6,6 +6,7 @@ import { createHash, randomBytes } from 'node:crypto'
 import { createServer } from 'node:http'
 import type { ChatGptState, ServiceTier, ThinkingLevel, VerbosityLevel } from '@shared/types'
 import { shell } from 'electron'
+import { httpFetch } from '../http/http.fetch'
 import {
   formatChatGptUsage,
   normalizeChatGptModels,
@@ -219,7 +220,7 @@ export default class ChatGptService {
     const bodyJson = JSON.stringify(body)
     let response: Response | null = null
     for (let attempt = 0; attempt < 2; attempt++) {
-      response = await fetch(CHATGPT_RESPONSES_URL, {
+      response = await httpFetch(CHATGPT_RESPONSES_URL, {
         method: 'POST',
         headers: this.createHeaders(auth.accessToken, auth.accountId),
         body: bodyJson,
@@ -265,7 +266,7 @@ export default class ChatGptService {
     try {
       const version = await this.fetchCodexClientVersion()
       const url = `${CHATGPT_MODELS_URL}?client_version=${encodeURIComponent(version)}`
-      const response = await fetch(url, {
+      const response = await httpFetch(url, {
         headers: this.createHeaders(auth.accessToken, auth.accountId, false),
       })
       if (!response.ok) return
@@ -279,7 +280,7 @@ export default class ChatGptService {
   /** Fetches usage data from ChatGPT. */
   private async fetchUsage(auth: ChatGptAuthTokens): Promise<void> {
     try {
-      const response = await fetch(CHATGPT_USAGE_URL, {
+      const response = await httpFetch(CHATGPT_USAGE_URL, {
         headers: this.createHeaders(auth.accessToken, auth.accountId, false),
       })
       if (!response.ok) return
@@ -293,7 +294,7 @@ export default class ChatGptService {
 
   /** Exchanges an OAuth authorization code for tokens. */
   private async exchangeCode(code: string, verifier: string): Promise<ChatGptAuthTokens | null> {
-    const response = await fetch(CHATGPT_TOKEN_URL, {
+    const response = await httpFetch(CHATGPT_TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
@@ -350,7 +351,7 @@ export default class ChatGptService {
   /** Refreshes the OAuth access token (single attempt). */
   private async refreshAccessToken(auth: ChatGptAuthTokens): Promise<ChatGptAuthTokens | null> {
     try {
-      const response = await fetch(CHATGPT_TOKEN_URL, {
+      const response = await httpFetch(CHATGPT_TOKEN_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
@@ -465,7 +466,7 @@ export default class ChatGptService {
     if (this.codexVersionFetched) return this.codexClientVersion
     this.codexVersionFetched = true
     try {
-      const response = await fetch(CODEX_LATEST_URL, {
+      const response = await httpFetch(CODEX_LATEST_URL, {
         headers: { Accept: 'application/json' },
       })
       if (!response.ok) return this.codexClientVersion
