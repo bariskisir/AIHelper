@@ -126,6 +126,18 @@ export default {
     connected: 'Verbunden',
     refresh: 'Aktualisieren',
     providers: { chatgpt: 'ChatGPT' },
+    ocr: 'OCR',
+    ocrEngine: 'OCR-Engine',
+    ocrEngineDescription:
+      'Wählen Sie die Engine zum Extrahieren von Text aus ausgewählten Bildern.',
+    ocrEngines: { tesseract: 'Tesseract (integriert)', ocrspace: 'OCR.space (online)' },
+    ocrSpaceApiKey: 'OCR.space API-Schlüssel',
+    ocrSpaceApiKeyDescription:
+      'Erforderlich für die OCR.space-Engine. Wird auf diesem Gerät gespeichert.',
+    ocrSpaceApiKeyPlaceholder: 'OCR.space API-Schlüssel eingeben',
+    ocrSpaceGetKey: 'Kostenlosen API-Schlüssel erhalten',
+    ocrSpaceGetKeyDescription:
+      'OCR.space bietet einen kostenlosen API-Schlüssel mit 500 Anfragen pro Tag.',
     chatGptAccount: 'ChatGPT-Konto',
     chatGptNotSignedIn: 'Melden Sie sich an, um ChatGPT-Modelle zu nutzen.',
     signIn: 'Anmelden',
@@ -215,6 +227,9 @@ export default {
   notices: {
     apiKeySaved: 'API-Schlüssel sicher gespeichert.',
     apiKeyRemoved: 'API-Schlüssel entfernt.',
+    ocrSpaceKeySaved: 'OCR.space API-Schlüssel gespeichert.',
+    ocrSpaceKeyRemoved: 'OCR.space API-Schlüssel entfernt.',
+    ocrSpaceKeyRequired: 'Bitte zuerst einen OCR.space API-Schlüssel eingeben.',
   },
   errors: {
     generic: 'Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.',

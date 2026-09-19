@@ -11,6 +11,7 @@ import {
   Inbox,
   Monitor,
   RefreshCw,
+  ScanText,
   ScrollText,
   Settings2,
   Sliders,
@@ -21,6 +22,7 @@ import AboutSettingsSection from './sections/AboutSettingsSection'
 import GeneralSettingsSection from './sections/GeneralSettingsSection'
 import DisplaySettingsSection from './sections/DisplaySettingsSection'
 import LoggingSettingsSection from './sections/LoggingSettingsSection'
+import OcrSettingsSection from './sections/OcrSettingsSection'
 import ProviderSettingsSection from './sections/ProviderSettingsSection'
 import SystemPromptsSettingsSection from './sections/SystemPromptsSettingsSection'
 import TelemetrySettingsSection from './sections/TelemetrySettingsSection'
@@ -45,6 +47,7 @@ const SettingsPage = (): React.JSX.Element => {
     { key: 'display', label: t('settings.display'), icon: <Monitor size={17} /> },
     { key: 'tray', label: t('settings.tray'), icon: <Inbox size={17} /> },
     { key: 'provider', label: t('settings.provider'), icon: <Cpu size={17} /> },
+    { key: 'ocr', label: t('settings.ocr'), icon: <ScanText size={17} /> },
     {
       key: 'prompts',
       label: t('settings.prompts'),
@@ -73,6 +76,7 @@ const SettingsPage = (): React.JSX.Element => {
     if (section === 'display') return <DisplaySettingsSection />
     if (section === 'tray') return <TraySettingsSection />
     if (section === 'provider') return <ProviderSettingsSection />
+    if (section === 'ocr') return <OcrSettingsSection />
     if (section === 'prompts') return <SystemPromptsSettingsSection />
     if (section === 'updates') return <UpdatesSettingsSection />
     if (section === 'telemetry') return <TelemetrySettingsSection />

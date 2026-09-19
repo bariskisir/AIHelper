@@ -5,6 +5,7 @@
 export default {
   app: { name: 'AI Helper', tagline: 'AI-powered text and image analysis' },
   common: {
+    save: 'Save',
     cancel: 'Cancel',
     rename: 'Rename',
     delete: 'Delete',
@@ -79,6 +80,15 @@ export default {
     aiProvider: 'Provider',
     aiProviderDescription: 'Choose the AI service provider used for scans.',
     providers: { chatgpt: 'ChatGPT' },
+    ocr: 'OCR',
+    ocrEngine: 'OCR engine',
+    ocrEngineDescription: 'Choose the engine used to extract text from selected images.',
+    ocrEngines: { tesseract: 'Tesseract (built-in)', ocrspace: 'OCR.space (online)' },
+    ocrSpaceApiKey: 'OCR.space API key',
+    ocrSpaceApiKeyDescription: 'Required for the OCR.space engine. Stored on this device.',
+    ocrSpaceApiKeyPlaceholder: 'Enter your OCR.space API key',
+    ocrSpaceGetKey: 'Get a free API key',
+    ocrSpaceGetKeyDescription: 'OCR.space offers a free API key with 500 requests per day.',
     prompts: 'System Prompts',
     updates: 'Updates',
     telemetry: 'Telemetry',
@@ -167,6 +177,9 @@ export default {
   notices: {
     apiKeySaved: 'API key saved securely.',
     apiKeyRemoved: 'API key removed.',
+    ocrSpaceKeySaved: 'OCR.space API key saved.',
+    ocrSpaceKeyRemoved: 'OCR.space API key removed.',
+    ocrSpaceKeyRequired: 'Enter an OCR.space API key first.',
   },
   errors: {
     generic: 'Something went wrong. Please try again.',

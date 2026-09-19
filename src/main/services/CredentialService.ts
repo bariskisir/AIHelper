@@ -103,6 +103,40 @@ export default class CredentialService {
     }
   }
 
+  private ocrSpacePath(): string {
+    return join(dirname(this.filePath), 'ocrspace_api_key.json')
+  }
+
+  /** Reads the stored OCR.space API key. */
+  public async getOcrSpaceApiKey(): Promise<string | null> {
+    try {
+      const content = await readFile(this.ocrSpacePath(), 'utf8')
+      const parsed: unknown = JSON.parse(content)
+      if (typeof parsed === 'string') return parsed
+      if (parsed && typeof parsed === 'object') {
+        const candidate = parsed as Record<string, unknown>
+        if (typeof candidate.apiKey === 'string') return candidate.apiKey
+      }
+      return null
+    } catch {
+      return null
+    }
+  }
+
+  /** Saves the OCR.space API key as plain JSON. */
+  public async saveOcrSpaceApiKey(apiKey: string): Promise<void> {
+    await writeFile(this.ocrSpacePath(), JSON.stringify(apiKey), { mode: 0o600 })
+  }
+
+  /** Removes the stored OCR.space API key. */
+  public async deleteOcrSpaceApiKey(): Promise<void> {
+    try {
+      await unlink(this.ocrSpacePath())
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+    }
+  }
+
   /** Reads persisted ChatGPT OAuth tokens from JSON, migrating legacy bin if needed. */
   public async getChatGptAuth(): Promise<ChatGptAuthTokens | null> {
     const fromJson = await this.readChatGptJson()

@@ -19,6 +19,7 @@ export type SettingsSection =
   | 'display'
   | 'tray'
   | 'provider'
+  | 'ocr'
   | 'prompts'
   | 'updates'
   | 'telemetry'

@@ -22,7 +22,6 @@ import {
   shell,
   type WebContents,
 } from 'electron'
-import { createWorker } from 'tesseract.js'
 import { z } from 'zod'
 import type AiProviderService from './services/AiProviderService'
 import type AppUpdater from './services/AppUpdater'
@@ -30,6 +29,7 @@ import type ChatGptService from './services/ChatGptService'
 import type CredentialService from './services/CredentialService'
 import { renderSessions } from './services/ExportService'
 import type LoggerService from './services/LoggerService'
+import type OcrService from './services/OcrService'
 import type StorageService from './services/StorageService'
 import type TrayService from './services/TrayService'
 import { settingsPatchSchema, settingsSchema } from './settingsSchema'
@@ -59,6 +59,7 @@ const TRUSTED_EXTERNAL_ORIGINS = new Set([
   APP_AUTHOR_URL,
   'https://chatgpt.com',
   'https://auth.openai.com',
+  'https://ocr.space',
 ])
 
 interface IpcServices {
@@ -66,6 +67,7 @@ interface IpcServices {
   credentials: CredentialService
   chatGpt: ChatGptService
   aiProvider: AiProviderService
+  ocr: OcrService
   tray: TrayService
   updater: AppUpdater
   logger: LoggerService
@@ -155,6 +157,19 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
   ipcMain.handle(IpcChannel.CredentialsDelete, async (event) => {
     assertSender(event.sender)
     await services.credentials.deleteApiKey()
+  })
+
+  ipcMain.handle(IpcChannel.OcrSpaceKeySave, async (event, input: unknown) => {
+    assertSender(event.sender)
+    await services.credentials.saveOcrSpaceApiKey(apiKeySchema.parse(input))
+  })
+  ipcMain.handle(IpcChannel.OcrSpaceKeyGet, async (event) => {
+    assertSender(event.sender)
+    return services.credentials.getOcrSpaceApiKey()
+  })
+  ipcMain.handle(IpcChannel.OcrSpaceKeyDelete, async (event) => {
+    assertSender(event.sender)
+    await services.credentials.deleteOcrSpaceApiKey()
   })
 
   ipcMain.handle('chatgpt:sign-in', async (event) => {
@@ -452,16 +467,6 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
     })
   })
 
-  let sharedOcrWorkerPromise: ReturnType<typeof createWorker> | null = null
-
-  /** Returns a lazily created Tesseract OCR worker instance shared across all scans. */
-  const getOcrWorker = async () => {
-    if (!sharedOcrWorkerPromise) {
-      sharedOcrWorkerPromise = createWorker('eng')
-    }
-    return sharedOcrWorkerPromise
-  }
-
   // Scan text
   ipcMain.handle(IpcChannel.AiScanText, async (event, input: unknown) => {
     assertSender(event.sender)
@@ -473,12 +478,15 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
     let finalText = text?.trim() || ''
     if (imageDataUrl) {
       try {
-        const worker = await getOcrWorker()
-        const ret = await worker.recognize(imageDataUrl)
-        const ocrText = ret.data.text.trim()
+        const ocrSpaceApiKey =
+          scanSettings.ocrEngine === 'ocrspace'
+            ? await services.credentials.getOcrSpaceApiKey()
+            : null
+        const ocrText = await services.ocr.recognize(imageDataUrl, scanSettings, ocrSpaceApiKey)
         if (ocrText) finalText = ocrText
       } catch (err) {
         services.logger.error('IPC', 'OCR recognition failed.', {
+          engine: scanSettings.ocrEngine,
           error: String(err),
         })
       }

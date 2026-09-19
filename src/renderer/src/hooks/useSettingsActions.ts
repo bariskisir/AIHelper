@@ -66,5 +66,34 @@ export const useSettingsActions = () => {
     }
   }, [message, t])
 
-  return { deleteApiKey, saveApiKey, saveSettings }
+  /** Saves the OCR.space API key used by the online OCR engine. */
+  const saveOcrSpaceApiKey = useCallback(
+    async (apiKey: string): Promise<boolean> => {
+      try {
+        await window.app.saveOcrSpaceApiKey(apiKey)
+        void message.success(t('notices.ocrSpaceKeySaved'))
+        return true
+      } catch (error) {
+        logger.error('OCR.space API key validation failed.', error)
+        void message.error(t('errors.generic'))
+        return false
+      }
+    },
+    [message, t],
+  )
+
+  /** Removes the stored OCR.space API key. */
+  const deleteOcrSpaceApiKey = useCallback(async (): Promise<boolean> => {
+    try {
+      await window.app.deleteOcrSpaceApiKey()
+      void message.success(t('notices.ocrSpaceKeyRemoved'))
+      return true
+    } catch (error) {
+      logger.error('OCR.space API key could not be removed.', error)
+      void message.error(t('errors.generic'))
+      return false
+    }
+  }, [message, t])
+
+  return { deleteApiKey, saveApiKey, saveSettings, saveOcrSpaceApiKey, deleteOcrSpaceApiKey }
 }

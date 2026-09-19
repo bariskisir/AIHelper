@@ -37,6 +37,12 @@ const api: AiHelperApi = {
   getApiKey: () => ipcRenderer.invoke(IpcChannel.CredentialsGet),
   /** Removes the encrypted API key. */
   deleteApiKey: () => ipcRenderer.invoke(IpcChannel.CredentialsDelete),
+  /** Validates and persists the OCR.space API key. */
+  saveOcrSpaceApiKey: (apiKey) => ipcRenderer.invoke(IpcChannel.OcrSpaceKeySave, apiKey),
+  /** Reads the stored OCR.space API key for the settings credential field. */
+  getOcrSpaceApiKey: () => ipcRenderer.invoke(IpcChannel.OcrSpaceKeyGet),
+  /** Removes the stored OCR.space API key. */
+  deleteOcrSpaceApiKey: () => ipcRenderer.invoke(IpcChannel.OcrSpaceKeyDelete),
   /** Initiates ChatGPT OAuth sign-in flow. */
   signInChatGpt: () => ipcRenderer.invoke('chatgpt:sign-in'),
   /** Signs out and clears ChatGPT tokens. */

@@ -11,6 +11,7 @@ import AppUpdater from './services/AppUpdater'
 import ChatGptService from './services/ChatGptService'
 import CredentialService from './services/CredentialService'
 import LoggerService from './services/LoggerService'
+import OcrService from './services/OcrService'
 import StorageService from './services/StorageService'
 import TelemetryService from './services/TelemetryService'
 import TrayService from './services/TrayService'
@@ -52,6 +53,7 @@ const openApplicationWindow = async (): Promise<void> => {
   )
   await chatGpt.initialize()
   const aiProvider = new AiProviderService(chatGpt, logger)
+  const ocr = new OcrService()
   const updater = new AppUpdater(logger)
   const window = await windowService.createWindow(
     logger,
@@ -72,6 +74,7 @@ const openApplicationWindow = async (): Promise<void> => {
     credentials,
     chatGpt,
     aiProvider,
+    ocr,
     tray,
     updater,
     logger,

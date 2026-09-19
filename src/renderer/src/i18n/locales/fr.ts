@@ -121,6 +121,16 @@ export default {
     connected: 'Connecté',
     refresh: 'Actualiser',
     providers: { chatgpt: 'ChatGPT' },
+    ocr: 'OCR',
+    ocrEngine: 'Moteur OCR',
+    ocrEngineDescription:
+      'Choisissez le moteur utilisé pour extraire le texte des images sélectionnées.',
+    ocrEngines: { tesseract: 'Tesseract (intégré)', ocrspace: 'OCR.space (en ligne)' },
+    ocrSpaceApiKey: 'Clé API OCR.space',
+    ocrSpaceApiKeyDescription: 'Requise pour le moteur OCR.space. Stockée sur cet appareil.',
+    ocrSpaceApiKeyPlaceholder: 'Saisissez votre clé API OCR.space',
+    ocrSpaceGetKey: 'Obtenir une clé API gratuite',
+    ocrSpaceGetKeyDescription: 'OCR.space propose une clé API gratuite avec 500 requêtes par jour.',
     chatGptAccount: 'Compte ChatGPT',
     chatGptNotSignedIn: 'Connectez-vous pour utiliser les modèles ChatGPT.',
     signIn: 'Se connecter',
@@ -211,6 +221,9 @@ export default {
   notices: {
     apiKeySaved: 'Clé API enregistrée en toute sécurité.',
     apiKeyRemoved: 'Clé API retirée.',
+    ocrSpaceKeySaved: 'Clé API OCR.space enregistrée.',
+    ocrSpaceKeyRemoved: 'Clé API OCR.space supprimée.',
+    ocrSpaceKeyRequired: "Saisissez d'abord une clé API OCR.space.",
   },
   errors: {
     generic: 'Un problème est survenu. Veuillez réessayer.',

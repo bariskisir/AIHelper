@@ -15,6 +15,7 @@ export const SCAN_MODES = ['text', 'image'] as const
 export const VERBOSITY_LEVELS = ['low', 'medium', 'high'] as const
 export const SERVICE_TIERS = ['normal', 'fast'] as const
 export const THINKING_LEVELS = ['off', 'low', 'medium', 'high', 'xhigh'] as const
+export const OCR_ENGINES = ['tesseract', 'ocrspace'] as const
 
 export type AiProvider = string
 export type AppLocale = (typeof APP_LOCALES)[number]
@@ -27,6 +28,7 @@ export type ScanMode = (typeof SCAN_MODES)[number]
 export type VerbosityLevel = (typeof VERBOSITY_LEVELS)[number]
 export type ServiceTier = (typeof SERVICE_TIERS)[number]
 export type ThinkingLevel = (typeof THINKING_LEVELS)[number]
+export type OcrEngine = (typeof OCR_ENGINES)[number]
 export type DesktopPlatform = 'win32' | 'darwin' | 'linux'
 
 /** A user-defined or built-in system prompt used to instruct the AI during scans. */
@@ -81,6 +83,7 @@ export interface AppSettings {
   textThinkingLevel: ThinkingLevel
   imageModel: string
   imageThinkingLevel: ThinkingLevel
+  ocrEngine: OcrEngine
   textSystemPromptPreset: string
   textCustomSystemPrompt: string
   imageSystemPromptPreset: string
@@ -113,6 +116,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   textThinkingLevel: 'low',
   imageModel: '',
   imageThinkingLevel: 'low',
+  ocrEngine: 'tesseract',
   textSystemPromptPreset: 'text-solver',
   textCustomSystemPrompt: '',
   imageSystemPromptPreset: 'image-solver',
@@ -251,6 +255,9 @@ export interface AiHelperApi {
   saveApiKey(apiKey: string): Promise<void>
   getApiKey(): Promise<string | null>
   deleteApiKey(): Promise<void>
+  saveOcrSpaceApiKey(apiKey: string): Promise<void>
+  getOcrSpaceApiKey(): Promise<string | null>
+  deleteOcrSpaceApiKey(): Promise<void>
   signInChatGpt(): Promise<void>
   signOutChatGpt(): Promise<ChatGptState>
   refreshChatGpt(): Promise<ChatGptState>
