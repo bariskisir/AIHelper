@@ -6,8 +6,10 @@ import { useTheme } from '@renderer/context/ThemeProvider'
 import { useSettingsActions } from '@renderer/hooks/useSettingsActions'
 import { useAppDispatch, useAppSelector } from '@renderer/store'
 import { setChatGptState } from '@renderer/store/appSlice'
-import { selectPreferredModelId } from '@shared/providers'
+import { OPENROUTER_MODEL, selectPreferredModelId } from '@shared/providers'
 import {
+  AI_PROVIDERS,
+  type AiProvider,
   SERVICE_TIERS,
   type ServiceTier,
   THINKING_LEVELS,
@@ -15,12 +17,14 @@ import {
   VERBOSITY_LEVELS,
   type VerbosityLevel,
 } from '@shared/types'
-import { Button, Select } from 'antd'
-import { LogIn, LogOut, RefreshCw } from 'lucide-react'
+import { App as AntdApp, Button, Input, Select } from 'antd'
+import { Info, LogIn, LogOut, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import SettingLabel from '../components/SettingLabel'
 import styles from '../SettingsPage.module.scss'
+
+const OPENROUTER_KEYS_URL = 'https://openrouter.ai/keys'
 
 const usageColor = (percent: number): string => {
   if (percent >= 95) return '#F44336'
@@ -43,12 +47,43 @@ const ProviderSettingsSection = (): React.JSX.Element => {
   const dispatch = useAppDispatch()
   const settings = useAppSelector((state) => state.app.settings)
   const chatGpt = useAppSelector((state) => state.app.chatGpt)
-  const { saveSettings } = useSettingsActions()
+  const { saveSettings, saveOpenRouterApiKey, deleteOpenRouterApiKey } = useSettingsActions()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const light = theme === 'light'
+  const { message } = AntdApp.useApp()
 
   const [refreshingChatGpt, setRefreshingChatGpt] = useState(false)
+  const [openRouterKey, setOpenRouterKey] = useState('')
+  const [storedOpenRouterKey, setStoredOpenRouterKey] = useState<string | null>(null)
+  const [savingOpenRouterKey, setSavingOpenRouterKey] = useState(false)
+
+  useEffect(() => {
+    void window.app.getOpenRouterApiKey().then((key) => {
+      setStoredOpenRouterKey(key)
+      setOpenRouterKey(key ?? '')
+    })
+  }, [])
+
+  const handleSaveOpenRouterKey = useCallback(async (): Promise<void> => {
+    const trimmed = openRouterKey.trim()
+    if (!trimmed) {
+      void message.warning(t('notices.openRouterKeyRequired'))
+      return
+    }
+    setSavingOpenRouterKey(true)
+    const saved = await saveOpenRouterApiKey(trimmed)
+    if (saved) setStoredOpenRouterKey(trimmed)
+    setSavingOpenRouterKey(false)
+  }, [openRouterKey, saveOpenRouterApiKey, message, t])
+
+  const handleRemoveOpenRouterKey = useCallback(async (): Promise<void> => {
+    const removed = await deleteOpenRouterApiKey()
+    if (removed) {
+      setStoredOpenRouterKey(null)
+      setOpenRouterKey('')
+    }
+  }, [deleteOpenRouterApiKey])
 
   const save = useCallback(
     async (patch: Partial<typeof settings>) => {
@@ -167,160 +202,225 @@ const ProviderSettingsSection = (): React.JSX.Element => {
           <div className={styles.settingControl}>
             <Select
               className={styles.wideControl ?? ''}
-              value="chatgpt"
-              options={[{ value: 'chatgpt', label: t('settings.providers.chatgpt') }]}
+              value={settings.aiProvider}
+              options={AI_PROVIDERS.map((provider) => ({
+                value: provider,
+                label: t(`settings.providers.${provider}`),
+              }))}
+              onChange={(aiProvider: AiProvider) => void save({ aiProvider })}
             />
           </div>
         </div>
       </section>
 
-      <h2 className={styles.groupTitle}>ChatGPT</h2>
-      <section className={styles.settingGroup}>
-        <div className={styles.settingRow}>
-          <SettingLabel
-            title={signedIn ? chatGpt.accountEmail || 'ChatGPT' : t('settings.chatGptNotSignedIn')}
-            description={
-              signedIn && chatGpt.limitLabel ? chatGpt.limitLabel.split(' · ')[0] || '' : ''
-            }
-          />
-          <div className={styles.settingControl}>
-            {signedIn ? (
-              <>
-                <Button
-                  {...(!light
-                    ? { type: 'primary' as const }
-                    : { className: styles.refreshButton ?? '' })}
-                  loading={refreshingChatGpt}
-                  icon={<RefreshCw size={14} />}
-                  onClick={() => void refreshChatGpt()}
-                >
-                  {t('settings.refresh')}
-                </Button>
-                <Button
-                  {...(light
-                    ? { danger: true as const }
-                    : { type: 'primary' as const, danger: true as const })}
-                  icon={<LogOut size={14} />}
-                  onClick={() =>
-                    void window.app.signOutChatGpt().then((s) => dispatch(setChatGptState(s)))
-                  }
-                >
-                  {t('settings.signOut')}
-                </Button>
-              </>
-            ) : (
+      {settings.aiProvider === 'openrouter' ? (
+        <>
+          <h2 className={styles.groupTitle}>{t('settings.providers.openrouter')}</h2>
+          <section className={styles.settingGroup}>
+            <div className={styles.apiCreditNotice}>
+              <Info size={16} />
+              <span>{t('settings.openRouterGetKeyDescription')}</span>
+              <Button
+                type="link"
+                className={styles.apiCreditLink || ''}
+                onClick={() => void window.app.openExternal(OPENROUTER_KEYS_URL)}
+              >
+                {t('settings.openRouterGetKey')}
+              </Button>
+            </div>
+            {!storedOpenRouterKey && (
+              <div className={styles.apiCreditNotice}>
+                <Info size={16} />
+                <span>{t('notices.openRouterKeyRequired')}</span>
+              </div>
+            )}
+            <Row
+              label={t('settings.openRouterApiKey')}
+              desc={t('settings.openRouterApiKeyDescription')}
+            >
+              <Input.Password
+                className={styles.inputW300 || ''}
+                value={openRouterKey}
+                placeholder={t('settings.openRouterApiKeyPlaceholder')}
+                onChange={(event) => setOpenRouterKey(event.target.value)}
+              />
               <Button
                 type="primary"
-                {...(light ? { ghost: true as const } : {})}
-                loading={chatGpt.status === 'signing-in'}
-                icon={<LogIn size={14} />}
-                onClick={() => void window.app.signInChatGpt()}
+                loading={savingOpenRouterKey}
+                onClick={() => void handleSaveOpenRouterKey()}
               >
-                {t('settings.signIn')}
+                {t('common.save')}
               </Button>
-            )}
-          </div>
-        </div>
-
-        {signedIn &&
-          chatGpt.usageWindows.length > 0 &&
-          chatGpt.usageWindows.map((w) => (
-            <div className={styles.settingRow} key={w.label}>
+              {storedOpenRouterKey && (
+                <Button danger onClick={() => void handleRemoveOpenRouterKey()}>
+                  {t('common.delete')}
+                </Button>
+              )}
+            </Row>
+            <Row
+              label={t('settings.openRouterModel')}
+              desc={t('settings.openRouterModelDescription')}
+            >
+              <span className={styles.balanceValue}>{OPENROUTER_MODEL}</span>
+            </Row>
+          </section>
+        </>
+      ) : (
+        <>
+          <h2 className={styles.groupTitle}>ChatGPT</h2>
+          <section className={styles.settingGroup}>
+            <div className={styles.settingRow}>
               <SettingLabel
                 title={
-                  w.label === 'Session'
-                    ? t('usage.session')
-                    : w.label === 'Weekly'
-                      ? t('usage.weekly')
-                      : w.label
+                  signedIn ? chatGpt.accountEmail || 'ChatGPT' : t('settings.chatGptNotSignedIn')
                 }
-                description=""
+                description={
+                  signedIn && chatGpt.limitLabel ? chatGpt.limitLabel.split(' · ')[0] || '' : ''
+                }
               />
-              <div className={`${styles.settingControl} ${styles.rowControl}`}>
-                <div style={{ width: 200 }}>
-                  <div
-                    style={{
-                      height: 6,
-                      borderRadius: 3,
-                      background: 'var(--color-border)',
-                      overflow: 'hidden',
-                    }}
+              <div className={styles.settingControl}>
+                {signedIn ? (
+                  <>
+                    <Button
+                      {...(!light
+                        ? { type: 'primary' as const }
+                        : { className: styles.refreshButton ?? '' })}
+                      loading={refreshingChatGpt}
+                      icon={<RefreshCw size={14} />}
+                      onClick={() => void refreshChatGpt()}
+                    >
+                      {t('settings.refresh')}
+                    </Button>
+                    <Button
+                      {...(light
+                        ? { danger: true as const }
+                        : { type: 'primary' as const, danger: true as const })}
+                      icon={<LogOut size={14} />}
+                      onClick={() =>
+                        void window.app.signOutChatGpt().then((s) => dispatch(setChatGptState(s)))
+                      }
+                    >
+                      {t('settings.signOut')}
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    type="primary"
+                    {...(light ? { ghost: true as const } : {})}
+                    loading={chatGpt.status === 'signing-in'}
+                    icon={<LogIn size={14} />}
+                    onClick={() => void window.app.signInChatGpt()}
                   >
-                    <div
-                      style={{
-                        height: '100%',
-                        width: `${w.percent}%`,
-                        borderRadius: 3,
-                        background: usageColor(w.percent),
-                        transition: 'width 0.3s',
-                      }}
-                    />
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: 'var(--color-text-3)',
-                      marginTop: 2,
-                    }}
-                  >
-                    <span>
-                      {w.percent}% {t('usage.used')}
-                    </span>
-                    {w.resetAt > 0 && (
-                      <span style={{ float: 'right' }}>
-                        {t('usage.resetsIn')} {formatRemaining(w.resetAt)}
-                      </span>
-                    )}
-                  </div>
-                </div>
+                    {t('settings.signIn')}
+                  </Button>
+                )}
               </div>
             </div>
-          ))}
 
-        {signedIn && (
-          <>
-            <Row label={t('settings.model')} desc={t('settings.modelDescription')}>
-              <Select
-                className={styles.selectW200 || ''}
-                value={settings.chatGptModel || undefined}
-                loading={refreshingChatGpt}
-                options={modelOptions}
-                onChange={(v) => handleModelChange(v ?? '')}
-              />
-            </Row>
-            <Row label={t('settings.thinkingLevel')} desc={t('settings.thinkingLevelDescription')}>
-              <Select
-                className={styles.selectW200 || ''}
-                value={settings.chatGptThinkingLevel}
-                options={thinkingOptions}
-                onChange={(v: ThinkingLevel) => {
-                  void save({ chatGptThinkingLevel: v })
-                }}
-              />
-            </Row>
-            <Row label={t('settings.verbosity')} desc={t('settings.verbosityDescription')}>
-              <Select
-                className={styles.selectW200 || ''}
-                value={settings.chatGptVerbosity}
-                options={verbosityOptions}
-                onChange={(v: VerbosityLevel) => {
-                  void save({ chatGptVerbosity: v })
-                }}
-              />
-            </Row>
-            <Row label={t('settings.serviceTier')} desc={t('settings.serviceTierDescription')}>
-              <Select
-                className={styles.selectW200 || ''}
-                value={settings.chatGptServiceTier}
-                options={serviceTierOptions}
-                onChange={(v: ServiceTier) => {
-                  void save({ chatGptServiceTier: v })
-                }}
-              />
-            </Row>
-          </>
-        )}
-      </section>
+            {signedIn &&
+              chatGpt.usageWindows.length > 0 &&
+              chatGpt.usageWindows.map((w) => (
+                <div className={styles.settingRow} key={w.label}>
+                  <SettingLabel
+                    title={
+                      w.label === 'Session'
+                        ? t('usage.session')
+                        : w.label === 'Weekly'
+                          ? t('usage.weekly')
+                          : w.label
+                    }
+                    description=""
+                  />
+                  <div className={`${styles.settingControl} ${styles.rowControl}`}>
+                    <div style={{ width: 200 }}>
+                      <div
+                        style={{
+                          height: 6,
+                          borderRadius: 3,
+                          background: 'var(--color-border)',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <div
+                          style={{
+                            height: '100%',
+                            width: `${w.percent}%`,
+                            borderRadius: 3,
+                            background: usageColor(w.percent),
+                            transition: 'width 0.3s',
+                          }}
+                        />
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: 'var(--color-text-3)',
+                          marginTop: 2,
+                        }}
+                      >
+                        <span>
+                          {w.percent}% {t('usage.used')}
+                        </span>
+                        {w.resetAt > 0 && (
+                          <span style={{ float: 'right' }}>
+                            {t('usage.resetsIn')} {formatRemaining(w.resetAt)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+            {signedIn && (
+              <>
+                <Row label={t('settings.model')} desc={t('settings.modelDescription')}>
+                  <Select
+                    className={styles.selectW200 || ''}
+                    value={settings.chatGptModel || undefined}
+                    loading={refreshingChatGpt}
+                    options={modelOptions}
+                    onChange={(v) => handleModelChange(v ?? '')}
+                  />
+                </Row>
+                <Row
+                  label={t('settings.thinkingLevel')}
+                  desc={t('settings.thinkingLevelDescription')}
+                >
+                  <Select
+                    className={styles.selectW200 || ''}
+                    value={settings.chatGptThinkingLevel}
+                    options={thinkingOptions}
+                    onChange={(v: ThinkingLevel) => {
+                      void save({ chatGptThinkingLevel: v })
+                    }}
+                  />
+                </Row>
+                <Row label={t('settings.verbosity')} desc={t('settings.verbosityDescription')}>
+                  <Select
+                    className={styles.selectW200 || ''}
+                    value={settings.chatGptVerbosity}
+                    options={verbosityOptions}
+                    onChange={(v: VerbosityLevel) => {
+                      void save({ chatGptVerbosity: v })
+                    }}
+                  />
+                </Row>
+                <Row label={t('settings.serviceTier')} desc={t('settings.serviceTierDescription')}>
+                  <Select
+                    className={styles.selectW200 || ''}
+                    value={settings.chatGptServiceTier}
+                    options={serviceTierOptions}
+                    onChange={(v: ServiceTier) => {
+                      void save({ chatGptServiceTier: v })
+                    }}
+                  />
+                </Row>
+              </>
+            )}
+          </section>
+        </>
+      )}
     </div>
   )
 }

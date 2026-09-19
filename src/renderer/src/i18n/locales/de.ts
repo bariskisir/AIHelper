@@ -125,7 +125,16 @@ export default {
     promptText: 'Prompt-Text',
     connected: 'Verbunden',
     refresh: 'Aktualisieren',
-    providers: { chatgpt: 'ChatGPT' },
+    providers: { chatgpt: 'ChatGPT', openrouter: 'OpenRouter (Jev)' },
+    openRouterApiKey: 'OpenRouter API-Schlüssel',
+    openRouterApiKeyDescription:
+      'Erforderlich für den OpenRouter (Jev)-Anbieter. Wird auf diesem Gerät gespeichert.',
+    openRouterApiKeyPlaceholder: 'OpenRouter API-Schlüssel eingeben',
+    openRouterGetKey: 'API-Schlüssel erhalten',
+    openRouterGetKeyDescription:
+      'Erstellen Sie einen OpenRouter API-Schlüssel, um den Jev-Anbieter zu nutzen.',
+    openRouterModel: 'Modell',
+    openRouterModelDescription: 'Das neueste Jev-Modell wird automatisch ausgewählt.',
     chatGptAccount: 'ChatGPT-Konto',
     chatGptNotSignedIn: 'Melden Sie sich an, um ChatGPT-Modelle zu nutzen.',
     signIn: 'Anmelden',
@@ -215,6 +224,9 @@ export default {
   notices: {
     apiKeySaved: 'API-Schlüssel sicher gespeichert.',
     apiKeyRemoved: 'API-Schlüssel entfernt.',
+    openRouterKeySaved: 'OpenRouter API-Schlüssel gespeichert.',
+    openRouterKeyRemoved: 'OpenRouter API-Schlüssel entfernt.',
+    openRouterKeyRequired: 'Bitte zuerst einen OpenRouter API-Schlüssel eingeben.',
   },
   errors: {
     generic: 'Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.',

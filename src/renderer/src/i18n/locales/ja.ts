@@ -120,7 +120,16 @@ export default {
     promptText: 'プロンプト本文',
     connected: '接続済み',
     refresh: '更新',
-    providers: { chatgpt: 'ChatGPT' },
+    providers: { chatgpt: 'ChatGPT', openrouter: 'OpenRouter (Jev)' },
+    openRouterApiKey: 'OpenRouter APIキー',
+    openRouterApiKeyDescription:
+      'OpenRouter (Jev) プロバイダーに必要です。このデバイスに保存されます。',
+    openRouterApiKeyPlaceholder: 'OpenRouter APIキーを入力',
+    openRouterGetKey: 'APIキーを取得',
+    openRouterGetKeyDescription:
+      'Jevプロバイダーを使用するにはOpenRouter APIキーを作成してください。',
+    openRouterModel: 'モデル',
+    openRouterModelDescription: '最新のJevモデルが自動的に選択されます。',
     chatGptAccount: 'ChatGPTアカウント',
     chatGptNotSignedIn: 'ChatGPTモデルを使用するにはサインインしてください。',
     signIn: 'サインイン',
@@ -210,6 +219,9 @@ export default {
   notices: {
     apiKeySaved: 'APIキーが安全に保存されました。',
     apiKeyRemoved: 'APIキーが削除されました。',
+    openRouterKeySaved: 'OpenRouter APIキーを保存しました。',
+    openRouterKeyRemoved: 'OpenRouter APIキーを削除しました。',
+    openRouterKeyRequired: '先にOpenRouter APIキーを入力してください。',
   },
   errors: {
     generic: '問題が発生しました。もう一度お試しください。',

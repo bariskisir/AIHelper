@@ -37,6 +37,12 @@ const api: AiHelperApi = {
   getApiKey: () => ipcRenderer.invoke(IpcChannel.CredentialsGet),
   /** Removes the encrypted API key. */
   deleteApiKey: () => ipcRenderer.invoke(IpcChannel.CredentialsDelete),
+  /** Validates and persists the OpenRouter API key. */
+  saveOpenRouterApiKey: (apiKey) => ipcRenderer.invoke(IpcChannel.OpenRouterKeySave, apiKey),
+  /** Reads the stored OpenRouter API key for the settings credential field. */
+  getOpenRouterApiKey: () => ipcRenderer.invoke(IpcChannel.OpenRouterKeyGet),
+  /** Removes the stored OpenRouter API key. */
+  deleteOpenRouterApiKey: () => ipcRenderer.invoke(IpcChannel.OpenRouterKeyDelete),
   /** Initiates ChatGPT OAuth sign-in flow. */
   signInChatGpt: () => ipcRenderer.invoke('chatgpt:sign-in'),
   /** Signs out and clears ChatGPT tokens. */

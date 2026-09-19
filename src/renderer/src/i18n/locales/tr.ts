@@ -117,7 +117,16 @@ export default {
     promptText: 'Prompt metni',
     connected: 'Bağlandı',
     refresh: 'Yenile',
-    providers: { chatgpt: 'ChatGPT' },
+    providers: { chatgpt: 'ChatGPT', openrouter: 'OpenRouter (Jev)' },
+    openRouterApiKey: 'OpenRouter API anahtarı',
+    openRouterApiKeyDescription:
+      'OpenRouter (Jev) sağlayıcısı için gereklidir. Bu cihazda saklanır.',
+    openRouterApiKeyPlaceholder: 'OpenRouter API anahtarınızı girin',
+    openRouterGetKey: 'API anahtarı al',
+    openRouterGetKeyDescription:
+      'Jev sağlayıcısını kullanmak için bir OpenRouter API anahtarı oluşturun.',
+    openRouterModel: 'Model',
+    openRouterModelDescription: 'En güncel Jev modeli otomatik olarak seçilir.',
     chatGptAccount: 'ChatGPT hesabı',
     chatGptNotSignedIn: 'ChatGPT modellerini kullanmak için giriş yapın.',
     signIn: 'Giriş Yap',
@@ -204,6 +213,9 @@ export default {
   notices: {
     apiKeySaved: 'API anahtarı güvenli şekilde kaydedildi.',
     apiKeyRemoved: 'API anahtarı kaldırıldı.',
+    openRouterKeySaved: 'OpenRouter API anahtarı kaydedildi.',
+    openRouterKeyRemoved: 'OpenRouter API anahtarı kaldırıldı.',
+    openRouterKeyRequired: 'Önce bir OpenRouter API anahtarı girin.',
   },
   errors: {
     generic: 'Bir şeyler ters gitti. Lütfen tekrar deneyin.',

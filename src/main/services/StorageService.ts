@@ -30,6 +30,7 @@ const sessionItemSchema = z.object({
   systemPromptText: z.string().max(10_000),
   input: z.string().max(200_000),
   output: z.string().max(200_000),
+  rawResponse: z.string().max(200_000).optional(),
   imagePath: z.string().max(500).optional(),
   /** Captured region as a PNG data URL — persisted so the renderer can show it after the scan ends. */
   imageDataUrl: z.string().max(50_000_000).optional(),

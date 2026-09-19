@@ -120,7 +120,15 @@ export default {
     promptText: 'Текст промпта',
     connected: 'Подключено',
     refresh: 'Обновить',
-    providers: { chatgpt: 'ChatGPT' },
+    providers: { chatgpt: 'ChatGPT', openrouter: 'OpenRouter (Jev)' },
+    openRouterApiKey: 'API-ключ OpenRouter',
+    openRouterApiKeyDescription:
+      'Требуется для провайдера OpenRouter (Jev). Хранится на этом устройстве.',
+    openRouterApiKeyPlaceholder: 'Введите ваш API-ключ OpenRouter',
+    openRouterGetKey: 'Получить API-ключ',
+    openRouterGetKeyDescription: 'Создайте API-ключ OpenRouter для использования провайдера Jev.',
+    openRouterModel: 'Модель',
+    openRouterModelDescription: 'Последняя модель Jev выбирается автоматически.',
     chatGptAccount: 'Аккаунт ChatGPT',
     chatGptNotSignedIn: 'Войдите, чтобы использовать модели ChatGPT.',
     signIn: 'Войти',
@@ -210,6 +218,9 @@ export default {
   notices: {
     apiKeySaved: 'API ключ сохранён безопасно.',
     apiKeyRemoved: 'API ключ удалён.',
+    openRouterKeySaved: 'API-ключ OpenRouter сохранён.',
+    openRouterKeyRemoved: 'API-ключ OpenRouter удалён.',
+    openRouterKeyRequired: 'Сначала введите API-ключ OpenRouter.',
   },
   errors: {
     generic: 'Что-то пошло не так. Пожалуйста, попробуйте снова.',

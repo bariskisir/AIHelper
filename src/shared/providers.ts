@@ -4,6 +4,9 @@
 
 import type { AiModel } from './types'
 
+/** OpenRouter latest-resolution alias so every request targets the newest Jev model. */
+export const OPENROUTER_MODEL = '~typesafe/jev-latest'
+
 /** Resolves the preferred model ID: mini → terra → sol → alphabetical first. */
 export const selectPreferredModelId = (models: AiModel[]): string => {
   const sorted = [...models].sort((left, right) =>

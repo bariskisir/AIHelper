@@ -2,7 +2,7 @@
  * Defines serializable AIHelper domain models and cross-process application contracts.
  */
 
-export const AI_PROVIDERS = ['chatgpt'] as const
+export const AI_PROVIDERS = ['chatgpt', 'openrouter'] as const
 export const APP_LOCALES = ['en', 'tr', 'de', 'fr', 'pt', 'zh', 'es', 'ru', 'ja', 'ko'] as const
 export const THEME_MODES = ['system', 'light', 'dark'] as const
 export const NAVBAR_POSITIONS = ['left', 'top'] as const
@@ -16,7 +16,7 @@ export const VERBOSITY_LEVELS = ['low', 'medium', 'high'] as const
 export const SERVICE_TIERS = ['normal', 'fast'] as const
 export const THINKING_LEVELS = ['off', 'low', 'medium', 'high', 'xhigh'] as const
 
-export type AiProvider = string
+export type AiProvider = (typeof AI_PROVIDERS)[number]
 export type AppLocale = (typeof APP_LOCALES)[number]
 export type ThemeMode = (typeof THEME_MODES)[number]
 export type NavbarPosition = (typeof NAVBAR_POSITIONS)[number]
@@ -73,6 +73,7 @@ export interface AppSettings {
   navbarPosition: NavbarPosition
   pageZoom: number
   timeFormat: TimeFormat
+  aiProvider: AiProvider
   chatGptModel: string
   chatGptThinkingLevel: ThinkingLevel
   chatGptVerbosity: VerbosityLevel
@@ -105,6 +106,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   navbarPosition: 'top',
   pageZoom: PAGE_ZOOM_LIMITS.default,
   timeFormat: '24-hour',
+  aiProvider: 'chatgpt',
   chatGptModel: '',
   chatGptThinkingLevel: 'low',
   chatGptVerbosity: 'low',
@@ -155,6 +157,8 @@ export interface SessionItem {
   systemPromptText: string
   input: string
   output: string
+  /** Raw provider response (e.g. the Jev decisions JSON) for diagnostics. */
+  rawResponse?: string | undefined
   imageDataUrl?: string | undefined
   createdAt: string
 }
@@ -251,6 +255,9 @@ export interface AiHelperApi {
   saveApiKey(apiKey: string): Promise<void>
   getApiKey(): Promise<string | null>
   deleteApiKey(): Promise<void>
+  saveOpenRouterApiKey(apiKey: string): Promise<void>
+  getOpenRouterApiKey(): Promise<string | null>
+  deleteOpenRouterApiKey(): Promise<void>
   signInChatGpt(): Promise<void>
   signOutChatGpt(): Promise<ChatGptState>
   refreshChatGpt(): Promise<ChatGptState>

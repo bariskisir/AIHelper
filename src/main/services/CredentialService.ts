@@ -103,6 +103,40 @@ export default class CredentialService {
     }
   }
 
+  private openRouterPath(): string {
+    return join(dirname(this.filePath), 'openrouter_api_key.json')
+  }
+
+  /** Reads the stored OpenRouter API key. */
+  public async getOpenRouterApiKey(): Promise<string | null> {
+    try {
+      const content = await readFile(this.openRouterPath(), 'utf8')
+      const parsed: unknown = JSON.parse(content)
+      if (typeof parsed === 'string') return parsed
+      if (parsed && typeof parsed === 'object') {
+        const candidate = parsed as Record<string, unknown>
+        if (typeof candidate.apiKey === 'string') return candidate.apiKey
+      }
+      return null
+    } catch {
+      return null
+    }
+  }
+
+  /** Saves the OpenRouter API key as plain JSON. */
+  public async saveOpenRouterApiKey(apiKey: string): Promise<void> {
+    await writeFile(this.openRouterPath(), JSON.stringify(apiKey), { mode: 0o600 })
+  }
+
+  /** Removes the stored OpenRouter API key. */
+  public async deleteOpenRouterApiKey(): Promise<void> {
+    try {
+      await unlink(this.openRouterPath())
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+    }
+  }
+
   /** Reads persisted ChatGPT OAuth tokens from JSON, migrating legacy bin if needed. */
   public async getChatGptAuth(): Promise<ChatGptAuthTokens | null> {
     const fromJson = await this.readChatGptJson()

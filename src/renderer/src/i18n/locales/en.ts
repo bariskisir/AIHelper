@@ -78,7 +78,15 @@ export default {
     aiService: 'AI service',
     aiProvider: 'Provider',
     aiProviderDescription: 'Choose the AI service provider used for scans.',
-    providers: { chatgpt: 'ChatGPT' },
+    providers: { chatgpt: 'ChatGPT', openrouter: 'OpenRouter (Jev)' },
+    openRouterApiKey: 'OpenRouter API key',
+    openRouterApiKeyDescription:
+      'Required for the OpenRouter (Jev) provider. Stored on this device.',
+    openRouterApiKeyPlaceholder: 'Enter your OpenRouter API key',
+    openRouterGetKey: 'Get an API key',
+    openRouterGetKeyDescription: 'Create an OpenRouter API key to use the Jev provider.',
+    openRouterModel: 'Model',
+    openRouterModelDescription: 'The latest Jev model is selected automatically.',
     prompts: 'System Prompts',
     updates: 'Updates',
     telemetry: 'Telemetry',
@@ -167,6 +175,9 @@ export default {
   notices: {
     apiKeySaved: 'API key saved securely.',
     apiKeyRemoved: 'API key removed.',
+    openRouterKeySaved: 'OpenRouter API key saved.',
+    openRouterKeyRemoved: 'OpenRouter API key removed.',
+    openRouterKeyRequired: 'Enter an OpenRouter API key first.',
   },
   errors: {
     generic: 'Something went wrong. Please try again.',

@@ -3,6 +3,7 @@
  */
 
 import {
+  AI_PROVIDERS,
   APP_LOCALES,
   type AppSettings,
   DEFAULT_SETTINGS,
@@ -32,6 +33,7 @@ const settingsFieldsSchema = z.object({
   navbarPosition: z.enum(NAVBAR_POSITIONS),
   pageZoom: z.number().min(PAGE_ZOOM_LIMITS.min).max(PAGE_ZOOM_LIMITS.max),
   timeFormat: z.enum(TIME_FORMATS),
+  aiProvider: z.enum(AI_PROVIDERS),
   chatGptModel: z.string().max(100),
   chatGptThinkingLevel: z.enum(THINKING_LEVELS),
   chatGptVerbosity: z.enum(VERBOSITY_LEVELS),

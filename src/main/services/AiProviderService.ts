@@ -1,19 +1,26 @@
 /**
- * Orchestrates AI scan requests through ChatGPT.
+ * Orchestrates AI scan requests through ChatGPT or OpenRouter (Jev).
  */
 
 import type { AiModel, AppSettings, ScanMode, ThinkingLevel } from '@shared/types'
+import { OPENROUTER_MODEL } from '@shared/providers'
 import type ChatGptService from './ChatGptService'
+import type CredentialService from './CredentialService'
 import type LoggerService from './LoggerService'
+import type OpenRouterService from './OpenRouterService'
 
 export interface StreamCallbacks {
   onDelta: (delta: string) => void
   signal: AbortSignal
+  /** Receives the raw provider payload when the provider returns a structured response. */
+  onRaw?: (raw: unknown) => void
 }
 
 export default class AiProviderService {
   public constructor(
     private readonly chatGpt: ChatGptService,
+    private readonly openRouter: OpenRouterService,
+    private readonly credentials: CredentialService,
     private readonly logger: LoggerService,
   ) {}
 
@@ -33,6 +40,7 @@ export default class AiProviderService {
 
   /** Resolves the current AI model for the active provider and scan mode. */
   public resolveModel(settings: AppSettings, scanMode?: ScanMode): string {
+    if (settings.aiProvider === 'openrouter') return OPENROUTER_MODEL
     let model =
       scanMode === 'text' ? settings.textModel : scanMode === 'image' ? settings.imageModel : ''
     if (!model || model === 'chatgpt:::') {
@@ -63,7 +71,8 @@ export default class AiProviderService {
   }
 
   /**
-   * Streams a text/image scan through ChatGPT.
+   * Streams a text/image scan through the active provider. OpenRouter requests are
+   * solved by Jev and emitted as a single delta.
    */
   public async streamScan(
     settings: AppSettings,
@@ -72,6 +81,24 @@ export default class AiProviderService {
     imageDataUrl: string | undefined,
     callbacks: StreamCallbacks,
   ): Promise<string> {
+    if (settings.aiProvider === 'openrouter') {
+      const apiKey = await this.credentials.getOpenRouterApiKey()
+      if (!apiKey) throw new Error('An OpenRouter API key is required.')
+      this.logger.info('AiProviderService', 'Starting Jev decision request', {
+        scanMode,
+        model: OPENROUTER_MODEL,
+        textLength: userInput.length,
+      })
+      const answer = await this.openRouter.solve(
+        userInput,
+        apiKey,
+        callbacks.signal,
+        callbacks.onRaw,
+      )
+      callbacks.onDelta(answer)
+      return answer
+    }
+
     const systemPrompt = this.resolveSystemPrompt(settings, scanMode)
     const model = this.resolveModel(settings, scanMode)
     const thinkingLevel = (this.resolveThinkingLevel(settings, scanMode) || 'low') as ThinkingLevel

@@ -59,6 +59,7 @@ const TRUSTED_EXTERNAL_ORIGINS = new Set([
   APP_AUTHOR_URL,
   'https://chatgpt.com',
   'https://auth.openai.com',
+  'https://openrouter.ai',
 ])
 
 interface IpcServices {
@@ -155,6 +156,19 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
   ipcMain.handle(IpcChannel.CredentialsDelete, async (event) => {
     assertSender(event.sender)
     await services.credentials.deleteApiKey()
+  })
+
+  ipcMain.handle(IpcChannel.OpenRouterKeySave, async (event, input: unknown) => {
+    assertSender(event.sender)
+    await services.credentials.saveOpenRouterApiKey(apiKeySchema.parse(input))
+  })
+  ipcMain.handle(IpcChannel.OpenRouterKeyGet, async (event) => {
+    assertSender(event.sender)
+    return services.credentials.getOpenRouterApiKey()
+  })
+  ipcMain.handle(IpcChannel.OpenRouterKeyDelete, async (event) => {
+    assertSender(event.sender)
+    await services.credentials.deleteOpenRouterApiKey()
   })
 
   ipcMain.handle('chatgpt:sign-in', async (event) => {
@@ -487,7 +501,7 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
     const item = {
       id: crypto.randomUUID(),
       scanMode: 'text' as const,
-      provider: 'chatgpt',
+      provider: scanSettings.aiProvider,
       model: services.aiProvider.resolveModel(scanSettings, 'text'),
       thinkingLevel: services.aiProvider.resolveThinkingLevel(scanSettings, 'text'),
       verbosity: scanSettings.chatGptVerbosity,
@@ -495,11 +509,12 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
       systemPromptText: services.aiProvider.resolveSystemPrompt(scanSettings, 'text'),
       input: finalText,
       output: '',
+      rawResponse: undefined as string | undefined,
       imageDataUrl: imageDataUrl || undefined,
       createdAt: now,
     }
     services.logger.info('IPC:AiScanText', 'Executing text scan request', {
-      provider: 'chatgpt',
+      provider: scanSettings.aiProvider,
       resolvedModel: item.model,
       thinkingLevel: item.thinkingLevel,
       textLength: finalText.length,
@@ -533,6 +548,9 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
               delta: d,
               isComplete: false,
             }),
+          onRaw: (raw) => {
+            item.rawResponse = JSON.stringify(raw, null, 2)
+          },
           signal: ac.signal,
         },
       )
@@ -572,24 +590,37 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
     const session = await services.storage.createSession()
     const sessionId = session.id
     const resolvedModel = services.aiProvider.resolveModel(scanSettings, 'image')
-    const promptText = text?.trim() || 'Analyze this image.'
+    let promptText = text?.trim() || 'Analyze this image.'
+    if (scanSettings.aiProvider === 'openrouter') {
+      try {
+        const worker = await getOcrWorker()
+        const ret = await worker.recognize(imageDataUrl)
+        const ocrText = ret.data.text.trim()
+        if (ocrText) promptText = ocrText
+      } catch (err) {
+        services.logger.error('IPC', 'OCR recognition failed for OpenRouter image scan.', {
+          error: String(err),
+        })
+      }
+    }
 
     const item = {
       id: crypto.randomUUID(),
       scanMode: 'image' as const,
-      provider: 'chatgpt',
+      provider: scanSettings.aiProvider,
       model: resolvedModel,
       thinkingLevel: services.aiProvider.resolveThinkingLevel(scanSettings, 'image'),
       verbosity: scanSettings.chatGptVerbosity,
       systemPromptPreset: scanSettings.imageSystemPromptPreset,
       systemPromptText: services.aiProvider.resolveSystemPrompt(scanSettings, 'image'),
-      input: text?.trim() || '',
+      input: scanSettings.aiProvider === 'openrouter' ? promptText : text?.trim() || '',
       output: '',
+      rawResponse: undefined as string | undefined,
       imageDataUrl,
       createdAt: now,
     }
     services.logger.info('IPC:AiScanImage', 'Executing image scan request', {
-      provider: 'chatgpt',
+      provider: scanSettings.aiProvider,
       resolvedModel: item.model,
       thinkingLevel: item.thinkingLevel,
       promptText,
@@ -623,6 +654,9 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
               delta: d,
               isComplete: false,
             }),
+          onRaw: (raw) => {
+            item.rawResponse = JSON.stringify(raw, null, 2)
+          },
           signal: ac.signal,
         },
       )

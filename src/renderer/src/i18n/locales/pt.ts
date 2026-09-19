@@ -120,7 +120,15 @@ export default {
     promptText: 'Texto do prompt',
     connected: 'Conectado',
     refresh: 'Atualizar',
-    providers: { chatgpt: 'ChatGPT' },
+    providers: { chatgpt: 'ChatGPT', openrouter: 'OpenRouter (Jev)' },
+    openRouterApiKey: 'Chave API do OpenRouter',
+    openRouterApiKeyDescription:
+      'Necessária para o provedor OpenRouter (Jev). Armazenada neste dispositivo.',
+    openRouterApiKeyPlaceholder: 'Insira sua chave API do OpenRouter',
+    openRouterGetKey: 'Obter uma chave API',
+    openRouterGetKeyDescription: 'Crie uma chave API do OpenRouter para usar o provedor Jev.',
+    openRouterModel: 'Modelo',
+    openRouterModelDescription: 'O modelo Jev mais recente é selecionado automaticamente.',
     chatGptAccount: 'Conta do ChatGPT',
     chatGptNotSignedIn: 'Faça login para usar os modelos do ChatGPT.',
     signIn: 'Entrar',
@@ -211,6 +219,9 @@ export default {
   notices: {
     apiKeySaved: 'Chave API salva com segurança.',
     apiKeyRemoved: 'Chave API removida.',
+    openRouterKeySaved: 'Chave API do OpenRouter salva.',
+    openRouterKeyRemoved: 'Chave API do OpenRouter removida.',
+    openRouterKeyRequired: 'Insira primeiro uma chave API do OpenRouter.',
   },
   errors: {
     generic: 'Algo deu errado. Tente novamente.',

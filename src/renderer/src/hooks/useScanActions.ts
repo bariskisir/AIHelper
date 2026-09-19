@@ -25,7 +25,17 @@ export const useScanActions = () => {
   const { message } = AntdApp.useApp()
   const { t } = useTranslation()
 
-  const ensureSignedIn = useCallback((): boolean => {
+  const ensureProviderReady = useCallback(async (): Promise<boolean> => {
+    if (settings.aiProvider === 'openrouter') {
+      const apiKey = await window.app.getOpenRouterApiKey()
+      if (!apiKey) {
+        void message.warning(t('notices.openRouterKeyRequired'))
+        dispatch(setPage('settings'))
+        dispatch(setSettingsSection('provider'))
+        return false
+      }
+      return true
+    }
     if (chatGpt.status !== 'signed-in') {
       void message.warning(t('errors.chatGptRequired'))
       dispatch(setPage('settings'))
@@ -33,12 +43,12 @@ export const useScanActions = () => {
       return false
     }
     return true
-  }, [chatGpt.status, dispatch, message, t])
+  }, [settings.aiProvider, chatGpt.status, dispatch, message, t])
 
   const scanWithOverlay = useCallback(
     async (mode: 'text' | 'image', repeat = false) => {
       if (scanState !== 'idle') return
-      if (!ensureSignedIn()) return
+      if (!(await ensureProviderReady())) return
       dispatch(startScan({ mode }))
       dispatch(setPendingImage(null))
       try {
@@ -64,13 +74,13 @@ export const useScanActions = () => {
         dispatch(completeScan())
       }
     },
-    [scanState, ensureSignedIn, settings, dispatch, message, t],
+    [scanState, ensureProviderReady, settings, dispatch, message, t],
   )
 
   const scanText = useCallback(
     async (text: string): Promise<void> => {
       if (scanState !== 'idle') return
-      if (!ensureSignedIn()) return
+      if (!(await ensureProviderReady())) return
       dispatch(startScan({ mode: 'text' }))
       try {
         await window.app.scanText({ text, settings })
@@ -81,13 +91,13 @@ export const useScanActions = () => {
         dispatch(completeScan())
       }
     },
-    [scanState, ensureSignedIn, settings, dispatch, message, t],
+    [scanState, ensureProviderReady, settings, dispatch, message, t],
   )
 
   const scanImage = useCallback(
     async (imageDataUrl: string, text?: string): Promise<void> => {
       if (scanState !== 'idle') return
-      if (!ensureSignedIn()) return
+      if (!(await ensureProviderReady())) return
       dispatch(startScan({ mode: 'image' }))
       try {
         await window.app.scanImage({ imageDataUrl, text, settings })
@@ -98,7 +108,7 @@ export const useScanActions = () => {
         dispatch(completeScan())
       }
     },
-    [scanState, ensureSignedIn, settings, dispatch, message, t],
+    [scanState, ensureProviderReady, settings, dispatch, message, t],
   )
 
   const cancelCurrentScan = useCallback(async (): Promise<void> => {

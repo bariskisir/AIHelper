@@ -66,5 +66,40 @@ export const useSettingsActions = () => {
     }
   }, [message, t])
 
-  return { deleteApiKey, saveApiKey, saveSettings }
+  /** Saves the OpenRouter API key used by the Jev provider. */
+  const saveOpenRouterApiKey = useCallback(
+    async (apiKey: string): Promise<boolean> => {
+      try {
+        await window.app.saveOpenRouterApiKey(apiKey)
+        void message.success(t('notices.openRouterKeySaved'))
+        return true
+      } catch (error) {
+        logger.error('OpenRouter API key validation failed.', error)
+        void message.error(t('errors.generic'))
+        return false
+      }
+    },
+    [message, t],
+  )
+
+  /** Removes the stored OpenRouter API key. */
+  const deleteOpenRouterApiKey = useCallback(async (): Promise<boolean> => {
+    try {
+      await window.app.deleteOpenRouterApiKey()
+      void message.success(t('notices.openRouterKeyRemoved'))
+      return true
+    } catch (error) {
+      logger.error('OpenRouter API key could not be removed.', error)
+      void message.error(t('errors.generic'))
+      return false
+    }
+  }, [message, t])
+
+  return {
+    deleteApiKey,
+    saveApiKey,
+    saveSettings,
+    saveOpenRouterApiKey,
+    deleteOpenRouterApiKey,
+  }
 }

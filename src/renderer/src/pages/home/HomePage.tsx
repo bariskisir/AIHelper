@@ -183,6 +183,7 @@ const HomePage = (): React.JSX.Element => {
 
   /** Renders the model and thinking-variant selector row for a given scan mode. */
   const renderModeControls = (mode: 'text' | 'image') => {
+    if (settings.aiProvider === 'openrouter') return null
     const value = mode === 'text' ? textModelValue : imageModelValue
     const selectedModel = chatGpt.models.find((m) => m.id === value) ?? chatGpt.models[0]
     const thinkingOptions =
@@ -231,7 +232,12 @@ const HomePage = (): React.JSX.Element => {
                 className={styles.scanBtn ?? ''}
                 icon={<FileText size={18} />}
                 onClick={() => void scanWithOverlay('text')}
-                disabled={isScanning || (chatGpt.status === 'signed-in' && !hasModels)}
+                disabled={
+                  isScanning ||
+                  (settings.aiProvider === 'chatgpt' &&
+                    chatGpt.status === 'signed-in' &&
+                    !hasModels)
+                }
               >
                 <span className={styles.scanLabel}>{t('home.scanText')}</span>
                 <span className={styles.scanShortcut}>
@@ -246,7 +252,12 @@ const HomePage = (): React.JSX.Element => {
                 className={styles.scanImgBtn ?? ''}
                 icon={<Image size={16} />}
                 onClick={() => void scanWithOverlay('image')}
-                disabled={isScanning || (chatGpt.status === 'signed-in' && !hasModels)}
+                disabled={
+                  isScanning ||
+                  (settings.aiProvider === 'chatgpt' &&
+                    chatGpt.status === 'signed-in' &&
+                    !hasModels)
+                }
               >
                 <span className={styles.scanLabel}>{t('home.scanImage')}</span>
                 <span className={styles.scanShortcut}>
