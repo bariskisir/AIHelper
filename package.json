@@ -13,7 +13,7 @@
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
-    "lint": "biome lint src tests vite.config.ts vitest.config.ts",
+    "lint": "biome lint src tests vite.config.mts vitest.config.mts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
