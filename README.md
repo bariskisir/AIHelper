@@ -36,6 +36,10 @@ cd aihelper
 npm run dev
 ```
 
+## Playground
+
+https://www.oxfordonlineenglish.com/english-level-test/vocabulary
+
 ## License
 
 MIT
