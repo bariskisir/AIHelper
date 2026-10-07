@@ -57,6 +57,9 @@ const openApplicationWindow = async (): Promise<void> => {
     logger,
     settings.showTrayIcon && settings.startMinimized,
   )
+  window.setContentProtection(settings.contentProtection)
+  window.setOpacity(settings.windowOpacity)
+  window.setSkipTaskbar(!settings.showTaskbar)
   trayService?.dispose()
   const tray = new TrayService(window, settings, logger)
   trayService = tray

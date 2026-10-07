@@ -13,7 +13,9 @@ import {
   THEME_MODES,
   THINKING_LEVELS,
   TIME_FORMATS,
+  TRAY_ICON_PRESETS,
   VERBOSITY_LEVELS,
+  WINDOW_OPACITY_LIMITS,
 } from '@shared/types'
 import { z } from 'zod'
 
@@ -47,6 +49,10 @@ const settingsFieldsSchema = z.object({
   systemPrompts: z.array(systemPromptSchema),
   compactMode: z.boolean(),
   alwaysOnTop: z.boolean(),
+  contentProtection: z.boolean(),
+  windowOpacity: z.number().min(WINDOW_OPACITY_LIMITS.min).max(WINDOW_OPACITY_LIMITS.max),
+  trayIcon: z.enum(TRAY_ICON_PRESETS),
+  showTaskbar: z.boolean(),
   showTrayIcon: z.boolean(),
   minimizeToTrayOnClose: z.boolean(),
   startMinimized: z.boolean(),

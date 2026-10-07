@@ -8,6 +8,11 @@ export const THEME_MODES = ['system', 'light', 'dark'] as const
 export const NAVBAR_POSITIONS = ['left', 'top'] as const
 /** Defines the supported page zoom range and control increment. */
 export const PAGE_ZOOM_LIMITS = { min: 0.5, max: 2, step: 0.1, default: 1 } as const
+/** Defines the supported window opacity range, slider step, and default. */
+export const WINDOW_OPACITY_LIMITS = { min: 0.1, max: 1, step: 0.1, default: 1 } as const
+/** Identifies the selectable system tray icon styles. */
+export const TRAY_ICON_PRESETS = ['default', 'bluetooth', 'weather'] as const
+export type TrayIconPreset = (typeof TRAY_ICON_PRESETS)[number]
 export const TIME_FORMATS = ['24-hour', '12-hour'] as const
 export const EXPORT_FORMATS = ['txt', 'json'] as const
 export const LOG_LEVELS = ['error', 'warn', 'info', 'debug', 'verbose'] as const
@@ -88,6 +93,10 @@ export interface AppSettings {
   systemPrompts: SystemPrompt[]
   compactMode: boolean
   alwaysOnTop: boolean
+  contentProtection: boolean
+  windowOpacity: number
+  trayIcon: TrayIconPreset
+  showTaskbar: boolean
   showTrayIcon: boolean
   minimizeToTrayOnClose: boolean
   startMinimized: boolean
@@ -135,6 +144,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   ],
   compactMode: false,
   alwaysOnTop: false,
+  contentProtection: true,
+  windowOpacity: WINDOW_OPACITY_LIMITS.default,
+  trayIcon: 'default',
+  showTaskbar: true,
   showTrayIcon: false,
   minimizeToTrayOnClose: false,
   startMinimized: false,
@@ -269,6 +282,10 @@ export interface AiHelperApi {
   exportSession(id: string | null, format: ExportFormat): Promise<boolean>
   fetchModels(): Promise<AiModel[]>
   setAlwaysOnTop(enabled: boolean): Promise<void>
+  /** Applies a live window opacity without persisting it. Returns the applied value. */
+  setWindowOpacity(opacity: number): Promise<number>
+  /** Reports the current native window opacity. */
+  getWindowOpacity(): Promise<number>
   /** Minimizes the main application window. */
   minimizeWindow(): Promise<void>
   /** Toggles maximized state and returns the resulting state. */

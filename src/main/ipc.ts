@@ -11,6 +11,7 @@ import {
   EXPORT_FORMATS,
   LOG_LEVELS,
   type UpdateStateEvent,
+  WINDOW_OPACITY_LIMITS,
 } from '@shared/types'
 import {
   app,
@@ -104,10 +105,14 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
       Promise.resolve(services.chatGpt.getState()),
     ])
     window.webContents.setZoomFactor(settings.pageZoom)
+    window.setContentProtection(settings.contentProtection)
+    window.setOpacity(settings.windowOpacity)
+    window.setSkipTaskbar(!settings.showTaskbar)
     if (process.platform === 'linux') {
       settings.showTrayIcon = false
       settings.minimizeToTrayOnClose = false
       settings.startMinimized = false
+      settings.showTaskbar = true
     }
     let sessions = await services.storage.listSessions()
     if (sessions.length === 0) {
@@ -135,9 +140,13 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
       delete patch.showTrayIcon
       delete patch.minimizeToTrayOnClose
       delete patch.startMinimized
+      delete patch.showTaskbar
     }
     const saved = await services.storage.updateSettings(patch)
     window.setAlwaysOnTop(saved.alwaysOnTop)
+    window.setContentProtection(saved.contentProtection)
+    window.setOpacity(saved.windowOpacity)
+    window.setSkipTaskbar(!saved.showTaskbar)
     window.webContents.setZoomFactor(saved.pageZoom)
     services.tray.applySettings(saved)
     services.logger.setLevel(saved.logLevel)
@@ -245,6 +254,7 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
   ipcMain.handle('screen:select', async (event, mode: unknown, repeat: unknown) => {
     assertSender(event.sender)
     if (mode !== 'text' && mode !== 'image') throw new Error('Invalid scan mode.')
+    const { contentProtection } = await services.storage.loadSettings()
 
     // Repeat mode: immediately capture last selection, no overlay
     if (repeat === true && lastSelectionPayload) {
@@ -342,6 +352,10 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
         })
 
         overlayWins.push(overlayWin)
+        // Hide the dimming/selection chrome from screen shares and recordings.
+        // Set before show: toggling protection on a visible transparent window
+        // can race the compositor and shift the frame on some platforms.
+        if (contentProtection) overlayWin.setContentProtection(true)
 
         // Prefer main-process keyboard handling — transparent fullscreen
         // BrowserWindows often never deliver DOM key events to the document.
@@ -367,16 +381,19 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
 
         const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
         *{margin:0;padding:0;box-sizing:border-box}
-        html,body{width:100vw;height:100vh;user-select:none;overflow:hidden;cursor:crosshair;background:transparent}
+        html,body{width:100vw;height:100vh;user-select:none;overflow:hidden;cursor:none;background:transparent}
         #sel{position:fixed;border:2px dashed ${borderColor};background:${fillColor};display:none;pointer-events:none;border-radius:4px}
         #lbl{position:fixed;top:18px;left:50%;transform:translateX(-50%);padding:8px 14px;border-radius:8px;background:rgba(15,23,42,0.9);color:#fff;font:14px/1.3 system-ui;pointer-events:none;white-space:nowrap}
         #dim{position:fixed;inset:0;background:rgba(15,23,42,0.18);pointer-events:none}
+        #cur{position:fixed;width:18px;height:18px;margin:-9px 0 0 -9px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 2px rgba(0,0,0,.65),0 0 8px rgba(0,0,0,.5);pointer-events:none;z-index:9999;display:none}
+        #cur::after{content:'';position:absolute;left:50%;top:50%;width:3px;height:3px;margin:-1.5px 0 0 -1.5px;border-radius:50%;background:#fff;box-shadow:0 0 0 1.5px rgba(0,0,0,.65)}
       </style></head><body>
-        <div id="dim"></div><div id="lbl">Drag to select — Esc cancels</div><div id="sel"></div>
+        <div id="dim"></div><div id="lbl">Drag to select — Esc cancels</div><div id="sel"></div><div id="cur"></div>
         <script>
           const { ipcRenderer } = require('electron')
           const sel = document.getElementById('sel')
           const lbl = document.getElementById('lbl')
+          const cur = document.getElementById('cur')
           var prevSel = ${prevSel}
           var displayIndex = ${i}
           var sx=0, sy=0, selecting=false
@@ -412,6 +429,7 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
             lbl.textContent = 'Drag to select — Esc cancels'
           })
           document.addEventListener('mousemove', function(e) {
+            cur.style.display='block';cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px'
             if (!selecting) return
             var l=Math.min(sx,e.clientX), t=Math.min(sy,e.clientY)
             sel.style.left=l+'px'; sel.style.top=t+'px'
@@ -719,6 +737,21 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
     assertSender(event.sender)
     if (typeof enabled !== 'boolean') throw new Error('Invalid window preference.')
     window.setAlwaysOnTop(enabled)
+  })
+  ipcMain.handle(IpcChannel.WindowSetOpacity, (event, input: unknown) => {
+    assertSender(event.sender)
+    const opacity = Number(input)
+    if (!Number.isFinite(opacity)) throw new Error('Invalid window opacity.')
+    const clamped = Math.min(
+      WINDOW_OPACITY_LIMITS.max,
+      Math.max(WINDOW_OPACITY_LIMITS.min, opacity),
+    )
+    window.setOpacity(clamped)
+    return clamped
+  })
+  ipcMain.handle(IpcChannel.WindowGetOpacity, (event) => {
+    assertSender(event.sender)
+    return window.getOpacity()
   })
   ipcMain.handle(IpcChannel.WindowMinimize, (event) => {
     assertSender(event.sender)
