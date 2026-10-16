@@ -33,6 +33,7 @@ import { renderSessions } from './services/ExportService'
 import type LoggerService from './services/LoggerService'
 import type StorageService from './services/StorageService'
 import type TrayService from './services/TrayService'
+import type WindowService from './services/WindowService'
 import { settingsPatchSchema, settingsSchema } from './settingsSchema'
 
 const scanTextSchema = z.object({
@@ -48,6 +49,10 @@ const scanImageSchema = z.object({
 const apiKeySchema = z.string().trim().min(1).max(512)
 const sessionIdSchema = z.uuid()
 const exportFormatSchema = z.enum(EXPORT_FORMATS)
+const sidebarStateSchema = z.object({
+  open: z.boolean(),
+  compact: z.boolean(),
+})
 const rendererLogSchema = z.object({
   level: z.enum(LOG_LEVELS),
   module: z.string().trim().min(1).max(100),
@@ -70,6 +75,7 @@ interface IpcServices {
   tray: TrayService
   updater: AppUpdater
   logger: LoggerService
+  windowService: WindowService
 }
 
 /** Removes all previously registered IPC handlers to prevent duplicates on hot-reload. */
@@ -130,6 +136,7 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
       chatGpt: chatGptState,
       platform: process.platform as BootstrapPayload['platform'],
       version: app.getVersion(),
+      sidebar: services.windowService.getSidebarState(),
     } satisfies BootstrapPayload
   })
 
@@ -773,6 +780,10 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
   ipcMain.handle(IpcChannel.WindowIsMaximized, (event) => {
     assertSender(event.sender)
     return window.isMaximized()
+  })
+  ipcMain.handle(IpcChannel.WindowSidebarStateSet, (event, input: unknown) => {
+    assertSender(event.sender)
+    services.windowService.setSidebarState(sidebarStateSchema.parse(input))
   })
   ipcMain.handle(IpcChannel.ThemeSet, (event, theme: unknown) => {
     assertSender(event.sender)

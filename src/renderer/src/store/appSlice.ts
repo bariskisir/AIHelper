@@ -88,6 +88,10 @@ const appSlice = createSlice({
       state.chatGpt = action.payload.chatGpt
       state.sessions = action.payload.sessions
       state.currentSession = action.payload.currentSession
+      if (action.payload.sidebar) {
+        state.sessionsSidebarOpen = action.payload.sidebar.open
+        state.compactMode = action.payload.sidebar.compact
+      }
     },
     /** Opens a top-level application page. */
     setPage(state, action: PayloadAction<AppPage>) {

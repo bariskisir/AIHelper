@@ -1,9 +1,10 @@
 /**
- * Verifies the Redux appSlice reducer: initial state, hydration guard,
- * settings update, page / settings-section navigation, ChatGPT state,
- * session CRUD operations, scan lifecycle (start / append / complete /
- * cancel), pending image and input text, update state events, sidebar
- * toggle, and compact mode.
+ * Verifies the Redux appSlice reducer: initial state, hydration guard
+ * (including persisted sidebar / compact mode state), settings update,
+ * page / settings-section navigation, ChatGPT state, session CRUD
+ * operations, scan lifecycle (start / append / complete / cancel),
+ * pending image and input text, update state events, sidebar toggle,
+ * and compact mode.
  */
 
 import { describe, expect, it } from 'vitest'
@@ -129,6 +130,7 @@ describe('appSlice – hydrate', () => {
         },
         sessions: summaries,
         currentSession: current,
+        sidebar: null,
       }),
     )
 
@@ -140,6 +142,54 @@ describe('appSlice – hydrate', () => {
     expect(state.chatGpt.accountEmail).toBe('u@test.com')
     expect(state.sessions).toHaveLength(1)
     expect(state.currentSession).toEqual(current)
+  })
+
+  it('applies persisted sidebar and compact mode state', () => {
+    const state = reducer(
+      undefined,
+      hydrate({
+        settings: DEFAULT_SETTINGS,
+        platform: 'win32',
+        version: '1.9.1',
+        chatGpt: {
+          status: 'signed-out',
+          accountEmail: '',
+          limitLabel: '',
+          usageWindows: [],
+          models: [],
+        },
+        sessions: [],
+        currentSession: sessionDoc(),
+        sidebar: { open: false, compact: true },
+      }),
+    )
+
+    expect(state.sessionsSidebarOpen).toBe(false)
+    expect(state.compactMode).toBe(true)
+  })
+
+  it('keeps sidebar defaults when the bootstrap payload has no persisted state', () => {
+    const state = reducer(
+      undefined,
+      hydrate({
+        settings: DEFAULT_SETTINGS,
+        platform: 'win32',
+        version: '1.9.1',
+        chatGpt: {
+          status: 'signed-out',
+          accountEmail: '',
+          limitLabel: '',
+          usageWindows: [],
+          models: [],
+        },
+        sessions: [],
+        currentSession: sessionDoc(),
+        sidebar: null,
+      }),
+    )
+
+    expect(state.sessionsSidebarOpen).toBe(true)
+    expect(state.compactMode).toBe(false)
   })
 
   it('does not overwrite state when already initialized', () => {
@@ -160,6 +210,7 @@ describe('appSlice – hydrate', () => {
         currentSession: sessionDoc({
           id: 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb',
         }),
+        sidebar: { open: false, compact: true },
       }),
     )
     expect(preloaded.initialized).toBe(true)
@@ -182,6 +233,7 @@ describe('appSlice – hydrate', () => {
         currentSession: sessionDoc({
           id: 'cccccccc-cccc-4ccc-cccc-cccccccccccc',
         }),
+        sidebar: { open: true, compact: false },
       }),
     )
 
@@ -189,6 +241,8 @@ describe('appSlice – hydrate', () => {
     expect(second.platform).toBe('linux')
     expect(second.version).toBe('1.0.0')
     expect(second.chatGpt.status).toBe('signed-out')
+    expect(second.sessionsSidebarOpen).toBe(false)
+    expect(second.compactMode).toBe(true)
   })
 })
 

@@ -78,6 +78,7 @@ const openApplicationWindow = async (): Promise<void> => {
     tray,
     updater,
     logger,
+    windowService,
   })
 
   /** Registers a global keyboard shortcut if it has not already been bound. */

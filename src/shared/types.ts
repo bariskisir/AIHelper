@@ -193,6 +193,14 @@ export interface SessionSummary {
   preview: string
 }
 
+/** Stores the left sessions sidebar collapse state and runtime compact mode persisted with window geometry. */
+export interface SidebarState {
+  /** Whether the left sessions sidebar is expanded. */
+  open: boolean
+  /** Whether the runtime compact mode is active. */
+  compact: boolean
+}
+
 /** Initial payload sent to the renderer on application startup. */
 export interface BootstrapPayload {
   settings: AppSettings
@@ -201,6 +209,8 @@ export interface BootstrapPayload {
   chatGpt: ChatGptState
   platform: DesktopPlatform
   version: string
+  /** Persisted sidebar and compact-mode state, or null before the first persistence. */
+  sidebar: SidebarState | null
 }
 
 /** Request shape for initiating a text-based AI scan. */
@@ -294,6 +304,8 @@ export interface AiHelperApi {
   closeWindow(): Promise<void>
   /** Reports whether the main application window is maximized. */
   isWindowMaximized(): Promise<boolean>
+  /** Persists the sessions sidebar collapse state and runtime compact mode with window geometry. */
+  setSidebarState(state: SidebarState): Promise<void>
   setTheme(theme: Exclude<ThemeMode, 'system'>): Promise<void>
   openExternal(url: string): Promise<void>
   openLogsDirectory(): Promise<void>

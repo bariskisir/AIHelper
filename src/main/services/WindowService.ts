@@ -5,6 +5,7 @@
 import { readFile } from 'node:fs/promises'
 import { renameSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import type { SidebarState } from '@shared/types'
 import { app, BrowserWindow, screen } from 'electron'
 import { isTrustedRendererNavigation } from '../security/RendererNavigationPolicy'
 import {
@@ -33,6 +34,19 @@ export default class WindowService {
   /** Returns the active main window when it is still alive. */
   public getMainWindow(): BrowserWindow | null {
     return this.mainWindow && !this.mainWindow.isDestroyed() ? this.mainWindow : null
+  }
+
+  /** Reports the persisted sidebar and compact-mode state for renderer bootstrap. */
+  public getSidebarState(): SidebarState | null {
+    if (!this.state?.sidebar) return null
+    return { open: this.state.sidebar.open, compact: this.state.compactMode ?? false }
+  }
+
+  /** Records the sessions sidebar collapse state and runtime compact mode chosen by the renderer. */
+  public setSidebarState(sidebar: SidebarState): void {
+    if (!this.state) return
+    this.state = { ...this.state, sidebar: { open: sidebar.open }, compactMode: sidebar.compact }
+    this.scheduleStatePersistence()
   }
 
   /** Creates and loads a hardened desktop window. */
@@ -74,6 +88,8 @@ export default class WindowService {
       bounds: restoredBounds ?? window.getBounds(),
       maximized: storedState?.maximized ?? false,
       fullScreen: storedState?.fullScreen ?? false,
+      sidebar: storedState?.sidebar,
+      compactMode: storedState?.compactMode,
     }
     this.configureRendererDiagnostics(window, logger)
     this.configureSecurity(window)
@@ -111,7 +127,7 @@ export default class WindowService {
     }
   }
 
-  /** Tracks normal bounds, maximized state, and native fullscreen state for later launches. */
+  /** Tracks normal bounds, maximized state, native fullscreen state, and sidebar changes. */
   private configureWindowStatePersistence(window: BrowserWindow): void {
     window.on('move', () => this.scheduleWindowStateSave(window))
     window.on('resize', () => this.scheduleWindowStateSave(window))
@@ -130,10 +146,15 @@ export default class WindowService {
   /** Debounces frequent move and resize events before saving the latest state. */
   private scheduleWindowStateSave(window: BrowserWindow): void {
     this.captureWindowState(window)
+    this.scheduleStatePersistence(() => this.captureWindowState(window))
+  }
+
+  /** Debounces window and sidebar changes before persisting the latest snapshot. */
+  private scheduleStatePersistence(capture?: () => void): void {
     if (this.stateSaveTimer) clearTimeout(this.stateSaveTimer)
     this.stateSaveTimer = setTimeout(() => {
       this.stateSaveTimer = null
-      this.captureWindowState(window)
+      capture?.()
       this.persistWindowState()
     }, 250)
   }
@@ -147,7 +168,14 @@ export default class WindowService {
       maximized || fullScreen
         ? (this.state?.bounds ?? window.getNormalBounds())
         : window.getBounds()
-    this.state = { revision: 1, bounds, maximized, fullScreen }
+    this.state = {
+      revision: 1,
+      bounds,
+      maximized,
+      fullScreen,
+      sidebar: this.state?.sidebar,
+      compactMode: this.state?.compactMode,
+    }
   }
 
   /** Atomically writes the small window-state document so close events cannot lose a last move. */

@@ -79,6 +79,8 @@ const api: AiHelperApi = {
   closeWindow: () => ipcRenderer.invoke(IpcChannel.WindowClose),
   /** Retrieves the main application window's maximized state. */
   isWindowMaximized: () => ipcRenderer.invoke(IpcChannel.WindowIsMaximized),
+  /** Persists the sessions sidebar collapse state and runtime compact mode with window geometry. */
+  setSidebarState: (state) => ipcRenderer.invoke(IpcChannel.WindowSidebarStateSet, state),
   /** Synchronizes native window chrome with the resolved renderer theme. */
   setTheme: (theme) => ipcRenderer.invoke(IpcChannel.ThemeSet, theme),
   /** Opens an allow-listed URL in the system browser. */
